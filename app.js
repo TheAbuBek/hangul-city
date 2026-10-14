@@ -160,6 +160,7 @@ function wireBack(){document.getElementById("back").onclick=()=>{
 // ---------- intro: teach or practice ----------
 function intro(){
   const p=PLACES[pi];
+  if(p.kind==="basics"){go("units");return;}
   const v=sceneShell(p,`<div class="panel">
       <div class="note info"><b style="color:var(--ink)">Real talk.</b> ${p.culture}</div>
       <div class="row"><button class="act" id="learn">Teach me first</button><button class="act alt" id="prac">Jump to practice</button></div>
