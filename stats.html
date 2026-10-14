@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Team Stats · Sejong Survival Korean</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+.wide{max-width:880px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi b{display:block;font-family:var(--f-display);font-weight:400;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:12px}
+.panel h2{margin:0;font-size:16px}
+.panel .sub{margin:0;font-size:12px;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:110px 1fr 44px;gap:10px;align-items:center;font-size:13px}
+.bar .track{height:14px;background:var(--bubble);border-radius:4px;overflow:hidden;display:flex}
+.bar .fill{height:100%}
+.bar .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.cols{display:flex;align-items:flex-end;gap:4px;height:140px;border-bottom:1px solid var(--line);padding-top:16px}
+.cols div{flex:1;background:var(--navy);border-radius:3px 3px 0 0;position:relative;min-height:2px}
+.cols div span{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+.colx{display:flex;gap:4px;font-size:10px;color:var(--muted)}
+.colx span{flex:1;text-align:center;overflow:hidden;white-space:nowrap}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.demo{background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;font-variant-numeric:tabular-nums}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+.tw{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="app wide" id="app">
+  <div class="top"><div><h1>Team stats</h1><p>Sejong Survival Korean · usage data for PBL Module 2</p></div>
+    <a class="back" href="index.html">← App</a></div>
+  <div id="status" class="note info">Loading…</div>
+  <div id="out" hidden></div>
+</div>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script>
+const PL=window.PLACES.map(p=>p.code);
+const NAMES=Object.fromEntries(window.PLACES.map(p=>[p.code,p.ko]));
+const KIND_LABEL={formal:"Too formal",casual:"Too casual (반말)",rude:"Rude / blunt",meaning:"Wrong meaning",word_order:"Word order",wrong_word:"Wrong word"};
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+function demoRows(){
+  // Clearly fake data so the team can see what the dashboard will look like.
+  const rows=[],countries=["Vietnam","China","Uzbekistan","Germany","Mexico","Mongolia","Kazakhstan","France","Indonesia","USA"];
+  const lv=["none","beginner","beginner","intermediate"],mo=["<1","1-6","1-6","6-12"];
+  const start=Date.now()-20*864e5;
+  for(let u=0;u<28;u++){
+    const uid="demo"+u,nick="Demo"+(u+1),c=countries[u%countries.length],l=lv[u%4],m=mo[(u*3)%4];
+    const days=1+Math.floor(Math.random()*9),reach=Math.random();
+    let t=start+Math.random()*6*864e5;
+    const push=(event,place="",detail="")=>rows.push({time:new Date(t+=6e4).toISOString(),user:uid,nickname:nick,event,place,detail,country:c,level:l,months:m});
+    push("signup","",c);
+    for(let d=0;d<days;d++){
+      t+=864e5*(0.6+Math.random()*1.8);push("session_start");
+      const pi=Math.min(4,Math.floor(d*reach*1.2));const code=PL[pi];
+      push("place_start",code);
+      const errs=Math.floor(Math.random()*4);
+      for(let e=0;e<errs;e++)push("answer_wrong",code,["formal","formal","casual","meaning","word_order","rude"][Math.floor(Math.random()*6)]);
+      if(Math.random()<.85){push("practice_done",code,errs);
+        if(Math.random()<.55)push("mission_done",code,["yes","yes","partly","partly","no"][Math.floor(Math.random()*5)]);else push("mission_later",code);}
+      else push("place_quit",code);
+    }
+  }
+  return rows;
+}
+
+async function load(){
+  const st=document.getElementById("status");
+  const url=window.SSK_ENDPOINT;
+  if(!url){
+    st.innerHTML=`No data source connected yet. Paste the Google Apps Script URL into <code>config.js</code> (see README). <button class="act alt" id="demo" style="display:inline-block;margin-left:8px;padding:6px 12px">Show demo data</button>`;
+    document.getElementById("demo").onclick=()=>{st.hidden=true;draw(demoRows(),true);};
+    return;
+  }
+  try{
+    const r=await fetch(url);const j=await r.json();
+    st.hidden=true;draw(j.rows||[],false);
+  }catch(e){
+    st.className="note bad";st.textContent="Couldn't load data from the Google Sheet. Check that the Apps Script is deployed with access set to “Anyone”.";
+  }
+}
+
+function bars(items,max,color){
+  return `<div class="bars">${items.map(([label,v,extra])=>`<div class="bar"><span>${label}</span><div class="track"><div class="fill" style="width:${max?100*v/max:0}%;background:${color}"></div></div><span class="v">${extra??v}</span></div>`).join("")}</div>`;
+}
+
+function draw(rows,isDemo){
+  const out=document.getElementById("out");out.hidden=false;
+  const users=new Map();
+  rows.forEach(r=>{if(!users.has(r.user))users.set(r.user,{days:new Set(),country:r.country,level:r.level,months:r.months,missions:0});
+    const u=users.get(r.user);u.days.add(String(r.time).slice(0,10));if(r.event==="mission_done")u.missions++;
+    if(r.country)u.country=r.country;if(r.level)u.level=r.level;if(r.months)u.months=r.months;});
+  const nUsers=users.size;
+  const avgDays=nUsers?[...users.values()].reduce((a,u)=>a+u.days.size,0)/nUsers:0;
+  const returning=[...users.values()].filter(u=>u.days.size>=2).length;
+  const missions=rows.filter(r=>r.event==="mission_done");
+  const success=missions.length?missions.filter(r=>r.detail==="yes").length/missions.length:0;
+
+  // daily active users
+  const byDay=new Map();rows.forEach(r=>{const d=String(r.time).slice(0,10);if(!byDay.has(d))byDay.set(d,new Set());byDay.get(d).add(r.user);});
+  const days=[...byDay.keys()].sort();
+  const dau=days.map(d=>byDay.get(d).size);const maxDau=Math.max(1,...dau);
+
+  // funnel per place
+  const cnt=(ev,code)=>new Set(rows.filter(r=>r.event===ev&&r.place===code).map(r=>r.user)).size;
+  const funnel=PL.map(c=>({c,start:cnt("place_start",c),prac:cnt("practice_done",c),mis:cnt("mission_done",c)}));
+  const maxF=Math.max(1,...funnel.map(f=>f.start));
+
+  // mistakes
+  const kinds={};rows.filter(r=>r.event==="answer_wrong").forEach(r=>kinds[r.detail]=(kinds[r.detail]||0)+1);
+  const kindItems=Object.entries(kinds).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[KIND_LABEL[k]||k,v]);
+  const maxK=Math.max(1,...kindItems.map(k=>k[1]));
+
+  // mission results
+  const res={yes:0,partly:0,no:0};missions.forEach(r=>res[r.detail]=(res[r.detail]||0)+1);
+  const tot=missions.length||1;
+
+  // by level
+  const lv={};users.forEach(u=>{const k=u.level||"?";lv[k]=lv[k]||{n:0,days:0,mis:0};lv[k].n++;lv[k].days+=u.days.size;lv[k].mis+=u.missions;});
+
+  const navy=css("--navy"),ok=css("--ok"),acc=css("--accent"),mut=css("--muted");
+  out.innerHTML=`
+  ${isDemo?`<div class="demo">DEMO DATA. Randomly generated to preview the dashboard. Not real users.</div>`:""}
+  <div class="kpis">
+    <div class="kpi"><b>${nUsers}</b><span>students signed up</span></div>
+    <div class="kpi"><b>${avgDays.toFixed(1)}</b><span>avg. days active per student</span></div>
+    <div class="kpi"><b>${nUsers?Math.round(100*returning/nUsers):0}%</b><span>came back on 2+ days</span></div>
+    <div class="kpi"><b>${missions.length}</b><span>real-life missions done</span></div>
+    <div class="kpi"><b>${Math.round(100*success)}%</b><span>missions understood first try</span></div>
+  </div>
+  <div class="panel"><h2>Daily active students</h2><p class="sub">Unique students who opened the app each day</p>
+    <div class="cols">${dau.map(v=>`<div style="height:${100*v/maxDau}%"><span>${v}</span></div>`).join("")}</div>
+    <div class="colx">${days.map((d,i)=>`<span>${i%Math.ceil(days.length/8)===0?d.slice(5):""}</span>`).join("")}</div></div>
+  <div class="grid2">
+    <div class="panel"><h2>How far students get</h2><p class="sub">Students per place: started → finished practice → did the real mission</p>
+      <div class="legend"><span><i style="background:${navy}"></i>Started</span><span><i style="background:${mut}"></i>Practice done</span><span><i style="background:${ok}"></i>Mission done</span></div>
+      <div class="bars">${funnel.map(f=>`<div class="bar"><span>${f.c} ${NAMES[f.c]}</span><div class="track" style="flex-direction:column;height:24px;gap:1px;background:none">
+        <div class="fill" style="height:8px;width:${100*f.start/maxF}%;background:${navy};border-radius:2px"></div>
+        <div class="fill" style="height:7px;width:${100*f.prac/maxF}%;background:${mut};border-radius:2px"></div>
+        <div class="fill" style="height:7px;width:${100*f.mis/maxF}%;background:${ok};border-radius:2px"></div></div><span class="v">${f.start}/${f.prac}/${f.mis}</span></div>`).join("")}</div></div>
+    <div class="panel"><h2>What students get wrong</h2><p class="sub">Wrong answers by type, all places</p>${bars(kindItems,maxK,acc)}</div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h2>Did Koreans understand them?</h2><p class="sub">Self-report after each real-life mission (n = ${missions.length})</p>
+      ${bars([["Yes, first try",res.yes,Math.round(100*res.yes/tot)+"%"],["Mostly",res.partly,Math.round(100*res.partly/tot)+"%"],["Switched to English",res.no,Math.round(100*res.no/tot)+"%"]],Math.max(res.yes,res.partly,res.no,1),ok)}</div>
+    <div class="panel"><h2>By Korean level</h2><p class="sub">Who uses it most</p><div class="tw"><table><tr><th>Level</th><th>Students</th><th>Avg. days</th><th>Missions / student</th></tr>
+      ${Object.entries(lv).map(([k,v])=>`<tr><td>${k}</td><td>${v.n}</td><td>${(v.days/v.n).toFixed(1)}</td><td>${(v.mis/v.n).toFixed(1)}</td></tr>`).join("")}</table></div></div>
+  </div>
+  <div class="row"><button class="act alt" id="csv">Download all events (CSV)</button></div>`;
+  document.getElementById("csv").onclick=()=>{
+    const H=["time","user","nickname","event","place","detail","country","level","months"];
+    const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+    const csv=[H.join(","),...rows.map(r=>H.map(h=>q(r[h])).join(","))].join("\n");
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv"}));a.download=isDemo?"ssk-demo-events.csv":"ssk-events.csv";a.click();
+  };
+}
+load();
+</script>
+</body>
+</html>

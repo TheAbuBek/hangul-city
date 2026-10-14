@@ -1,0 +1,142 @@
+// All lesson content lives here. Your Korean teammate can edit lines in this file only.
+// who:"them" = the character speaks. who:"me" = the learner's turn.
+//   type:"build" -> arrange word tiles (answer = correct order, extra = distractors)
+//   type:"pick"  -> choose a reply (answer = index of the right option; notes/kinds explain wrong ones)
+//   type:"say"   -> say it out loud
+// kinds are used for statistics: formal | casual | rude | meaning
+window.PLACES=[
+ {code:"편의점",ko:"편의점",en:"Convenience store",brands:"GS25 · CU · 7-Eleven",
+  scene:"store",sub:"After class, 18:40",who:"알바생",whoEn:"part-time clerk",
+  char:{skin:"#F2C9A0",hair:"#2B211C",style:"short",top:"#3C8D5A",acc:"vest"},
+  culture:"Clerks rattle off the same fast questions in every store: 봉투? 데워 드려요? 적립? 영수증? Learn this pattern once and you'll understand most shops. Say 수고하세요 when you leave.",
+  lesson:[
+   {ko:"봉투 필요하세요?",ro:"bongtu piryohaseyo?",en:"Do you need a bag?",note:"Bags cost money, so they always ask. Answer 네 or 아뇨, 괜찮아요."},
+   {ko:"데워 드려요?",ro:"dewo deuryeoyo?",en:"Shall I heat it up?",note:"For lunch boxes (도시락) and 삼각김밥. Say 네, 데워 주세요."},
+   {ko:"아뇨, 괜찮아요",ro:"anyo, gwaenchanayo",en:"No thanks",note:"The polite way to say no to almost anything. Never 싫어요, which sounds like 'I don't want to.'"},
+   {ko:"수고하세요",ro:"sugohaseyo",en:"(Bye,) keep up the good work",note:"What Koreans say leaving a shop. Sounds natural and friendly."}],
+  script:[
+   {who:"them",ko:"어서오세요~",en:"Welcome~"},
+   {who:"them",ko:"봉투 필요하세요?",en:"Need a bag?"},
+   {who:"me",type:"pick",en:"No thanks, you'll carry it.",options:["아뇨, 괜찮아요","봉투가 필요하지 않습니다","싫어요"],answer:0,
+    notes:{1:"Textbook. Real people just say 아뇨, 괜찮아요.",2:"싫어요 means 'I don't want to,' which sounds blunt here."},kinds:{1:"formal",2:"rude"}},
+   {who:"them",ko:"이거 데워 드려요?",en:"Want this heated?"},
+   {who:"me",type:"build",en:"Yes, heat it please.",answer:["네,","데워","주세요"],extra:["봉투","없어요"]},
+   {who:"them",ko:"포인트 적립하세요?",en:"Collecting points?"},
+   {who:"me",type:"pick",en:"You don't have a points card.",options:["아뇨, 없어요","네, 데워 주세요","포인트 카드를 소지하고 있지 않습니다"],answer:0,
+    notes:{1:"She asked about points, not heating.",2:"Nobody says this. 아뇨, 없어요 is enough."},kinds:{1:"meaning",2:"formal"}},
+   {who:"them",ko:"영수증 드릴까요?",en:"Receipt?"},
+   {who:"me",type:"pick",en:"No receipt.",options:["아뇨, 괜찮아요","네, 카드요","몇 번이요?"],answer:0},
+   {who:"them",ko:"감사합니다~",en:"Thank you~"},
+   {who:"me",type:"say",ko:"수고하세요",ro:"sugohaseyo",en:"Leave the way Koreans do."}],
+  mission:{title:"Buy something at a GS25, CU or 7-Eleven and get it heated, in Korean.",say:"네, 데워 주세요.",tip:"On your way out: 수고하세요."}},
+
+ {code:"식당",ko:"식당",en:"Korean restaurant",brands:"김치찌개 · 백반집",
+  scene:"restaurant",sub:"Lunch near campus, 12:30",who:"이모",whoEn:"restaurant auntie",
+  char:{skin:"#EBC19B",hair:"#3A2A24",style:"perm",top:"#C0473A",acc:"apron"},
+  culture:"Staff won't come to your table on their own. Call them with 여기요! or 이모!, which is normal, not rude. Water is often self-service (물은 셀프), and you pay at the counter on the way out. No tipping.",
+  lesson:[
+   {ko:"여기요!",ro:"yeogiyo!",en:"Excuse me! (calling staff)",note:"Raise your hand and say it loudly. Waiting quietly means nobody comes."},
+   {ko:"○○ 두 개 주세요",ro:"du gae juseyo",en:"Two ○○, please",note:"Food + number + 주세요. 한 개, 두 개, 세 개."},
+   {ko:"덜 맵게 해 주세요",ro:"deol maepge hae juseyo",en:"Less spicy, please",note:"The most useful sentence in a Korean restaurant."},
+   {ko:"잘 먹었습니다",ro:"jal meogeotseumnida",en:"I ate well (thank you)",note:"Say it to the staff when you pay or leave. They love hearing it from foreigners."}],
+  script:[
+   {who:"them",ko:"어서 오세요~ 몇 분이세요?",en:"Welcome~ How many people?"},
+   {who:"me",type:"pick",en:"Two people.",options:["두 명이요","두 사람입니다","둘이야"],answer:0,
+    notes:{1:"Understandable, but stiff. Just 두 명이요.",2:"반말. Too casual with staff."},kinds:{1:"formal",2:"casual"}},
+   {who:"them",ko:"편한 데 앉으세요~",en:"Sit anywhere you like~"},
+   {who:"me",type:"pick",en:"You're ready to order. Call her over.",options:["여기요! 주문할게요","주문을 하고 싶습니다","저기... 죄송한데..."],answer:0,
+    notes:{1:"Correct, but sounds like a script. 여기요! 주문할게요.",2:"Too quiet and hesitant. In a busy 식당 she won't come."},kinds:{1:"formal",2:"meaning"}},
+   {who:"them",ko:"네~ 뭐 드릴까요?",en:"Yes~ What can I get you?"},
+   {who:"me",type:"build",en:"Two kimchi stews, please.",answer:["김치찌개","두 개","주세요"],extra:["하나","있어요"]},
+   {who:"them",ko:"많이 매운데 괜찮아요?",en:"It's pretty spicy. Is that okay?"},
+   {who:"me",type:"pick",en:"Ask for it less spicy.",options:["덜 맵게 해 주세요","매운 음식을 잘 먹지 못합니다","안 매워?"],answer:0,
+    notes:{1:"Textbook. 덜 맵게 해 주세요 is what people actually say.",2:"That asks 'it's not spicy?' and in 반말."},kinds:{1:"formal",2:"casual"}},
+   {who:"them",ko:"네~ 물은 셀프예요!",en:"Okay~ Water is self-service!"},
+   {who:"them",ko:"맛있게 드셨어요? 이만 원이요.",en:"Did you enjoy it? That's 20,000 won."},
+   {who:"me",type:"say",ko:"잘 먹었습니다",ro:"jal meogeotseumnida",en:"Thank her as you pay."}],
+  mission:{title:"Order at a Korean restaurant and ask for it less spicy.",say:"여기요! 김치찌개 하나 주세요. 덜 맵게 해 주세요.",tip:"Leaving: 잘 먹었습니다."}},
+
+ {code:"대학교",ko:"대학교",en:"University office",brands:"학과 사무실",
+  scene:"office",sub:"Department office, 14:00",who:"조교",whoEn:"department assistant",
+  char:{skin:"#F4D2B0",hair:"#1E1A18",style:"bob",top:"#3E5C9A",acc:"glasses"},
+  culture:"Offices open with 어떻게 오셨어요? It means 'how can I help,' not 'how did you get here.' Say what you need with -려고 왔는데요 (I came to…).",
+  lesson:[
+   {ko:"어떻게 오셨어요?",ro:"eotteoke osyeosseoyo?",en:"How can I help you?",note:"Literally 'how did you come,' but it means 'what do you need.'"},
+   {ko:"○○ 떼려고 왔는데요",ro:"ttaeryeogo wanneundeyo",en:"I came to get ○○ (a document)",note:"떼다 is the everyday verb for getting an official document."},
+   {ko:"재학증명서",ro:"jaehak jeungmyeongseo",en:"Enrollment certificate",note:"You'll need it for visas, banks and scholarships."},
+   {ko:"아 네, 알겠어요!",ro:"a ne, algesseoyo!",en:"Oh, got it!",note:"Natural reaction. 이해했습니다 sounds like a soldier reporting."}],
+  script:[
+   {who:"them",ko:"네, 어떻게 오셨어요?",en:"Yes, how can I help you?"},
+   {who:"me",type:"build",en:"Say you came to get an enrollment certificate.",answer:["재학증명서","떼려고","왔는데요"],extra:["주세요","어디"]},
+   {who:"them",ko:"아, 그거 발급기에서 바로 뽑으시면 돼요.",en:"Oh, you can just print that at the kiosk."},
+   {who:"me",type:"pick",en:"Ask where the kiosk is.",options:["발급기 어디 있어요?","발급기의 위치를 알려 주시겠습니까?","발급기 어디야?"],answer:0,
+    notes:{1:"Polite, but stiff. Spoken Korean is shorter.",2:"반말. Too casual with office staff."},kinds:{1:"formal",2:"casual"}},
+   {who:"them",ko:"학생회관 1층에 있어요. 학생증만 있으면 돼요.",en:"First floor of the Student Center. You just need your student ID."},
+   {who:"me",type:"pick",en:"React naturally: oh, got it.",options:["아 네, 알겠어요!","이해했습니다","오케이"],answer:0,
+    notes:{1:"Sounds like a soldier reporting. 아 네, 알겠어요 is what people say.",2:"Too casual for an office."},kinds:{1:"formal",2:"casual"}},
+   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank her on your way out."}],
+  mission:{title:"Get one thing done at your department office in Korean.",say:"재학증명서 떼려고 왔는데요.",tip:"Pointed elsewhere? 거기 어디 있어요?"}},
+
+ {code:"버스",ko:"버스 정류장",en:"Bus stop",brands:"어린이대공원역",
+  scene:"bus",sub:"Evening, 19:15",who:"기사님",whoEn:"bus driver",
+  char:{skin:"#E2B48C",hair:"#2A2522",style:"short",top:"#5B6F8A",acc:"cap"},
+  culture:"Drivers answer in two words or a nod. That's normal, not rude. Call them 기사님, point at the bus with 이거, and tap your card when you get on and off.",
+  lesson:[
+   {ko:"기사님",ro:"gisanim",en:"Driver (polite)",note:"How everyone addresses bus and taxi drivers."},
+   {ko:"이거 ○○ 가요?",ro:"igeo ○○ gayo?",en:"Does this go to ○○?",note:"Point at the bus. Short and completely natural."},
+   {ko:"몇 정거장 가야 돼요?",ro:"myeot jeonggeojang gaya dwaeyo?",en:"How many stops?",note:"정거장 = stop. Then listen for the announcement."}],
+  script:[
+   {who:"me",type:"build",en:"Ask the driver if this bus goes to 건대입구.",answer:["기사님,","이거","건대입구","가요?"],extra:["주세요","몇"]},
+   {who:"them",ko:"가요.",en:"Yep."},
+   {who:"me",type:"pick",en:"Ask how many stops.",options:["몇 정거장 가야 돼요?","몇 층이에요?","정거장이 몇 개 남았습니까?"],answer:0,
+    notes:{1:"That asks which floor.",2:"Understandable, but it sounds like a news anchor."},kinds:{1:"meaning",2:"formal"}},
+   {who:"them",ko:"세 정거장. 방송 나오면 내려요.",en:"Three stops. Get off when you hear the announcement."},
+   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank him as you tap your card."}],
+  mission:{title:"Ask a bus driver if the bus goes where you need.",say:"기사님, 이거 건대입구 가요?",tip:"Then: 몇 정거장 가야 돼요?"}},
+
+ {code:"병원",ko:"병원",en:"Hospital reception",brands:"동네 의원",
+  scene:"hospital",sub:"Clinic reception, 10:00",who:"간호사",whoEn:"reception nurse",
+  char:{skin:"#F1CDAA",hair:"#2E2420",style:"bun",top:"#E9F1F3",acc:"nursecap"},
+  culture:"Bring your 외국인등록증 (residence card) to register. Reception asks the same three things: why you came, since when, and whether you have a fever. Describe pain with ○○이/가 아파요.",
+  lesson:[
+   {ko:"목이 아파요",ro:"mogi apayo",en:"My throat hurts",note:"Swap the body part: 머리 (head), 배 (stomach), 목 (throat)."},
+   {ko:"처음이에요",ro:"cheoeumieyo",en:"It's my first visit",note:"They'll ask for your ID to register you."},
+   {ko:"어제부터요",ro:"eojebuteoyo",en:"Since yesterday",note:"-부터 = since. 오늘 아침부터요 = since this morning."},
+   {ko:"열은 없어요",ro:"yeoreun eopseoyo",en:"No fever",note:"열 = fever. 열이 있어요 = I have a fever."}],
+  script:[
+   {who:"them",ko:"안녕하세요, 어떻게 오셨어요?",en:"Hello, what brings you in?"},
+   {who:"me",type:"build",en:"Say you came because your throat hurts.",answer:["목이","아파서","왔어요"],extra:["배가","주세요"]},
+   {who:"them",ko:"처음 오셨어요? 신분증 주세요.",en:"First time here? Your ID, please."},
+   {who:"me",type:"pick",en:"Yes, first time. Hand over your residence card.",options:["네, 처음이에요. 여기요","본 병원 방문은 처음입니다","응, 처음"],answer:0,
+    notes:{1:"Sounds like a written form. 네, 처음이에요 is enough.",2:"반말. Never with a nurse."},kinds:{1:"formal",2:"casual"}},
+   {who:"them",ko:"언제부터 아프셨어요?",en:"Since when has it hurt?"},
+   {who:"me",type:"pick",en:"Since yesterday.",options:["어제부터요","내일부터요","어제부터 고통이 시작되었습니다"],answer:0,
+    notes:{1:"내일 = tomorrow.",2:"Way too dramatic and formal."},kinds:{1:"meaning",2:"formal"}},
+   {who:"them",ko:"열은 있어요?",en:"Any fever?"},
+   {who:"me",type:"pick",en:"No fever.",options:["열은 없어요","열 주세요","발열 증상은 없습니다"],answer:0,
+    notes:{1:"That's 'give me a fever.'",2:"Medical-report Korean. Just 열은 없어요."},kinds:{1:"meaning",2:"formal"}},
+   {who:"them",ko:"앉아서 기다리세요. 이름 부르면 들어가시면 돼요.",en:"Have a seat. Go in when we call your name."},
+   {who:"me",type:"say",ko:"네, 감사합니다",ro:"ne, gamsahamnida",en:"Answer her."}],
+  mission:{title:"Next time you need a clinic, check in at reception in Korean.",say:"목이 아파서 왔어요. 어제부터요.",tip:"Bring your 외국인등록증."}},
+
+ {code:"공항",ko:"공항",en:"Airport",brands:"인천공항",
+  scene:"airport",sub:"Arrivals hall, picking up a friend",who:"안내 직원",whoEn:"information desk",
+  char:{skin:"#F0C8A4",hair:"#3B2B22",style:"bun",top:"#2F4A7A",acc:"scarf"},
+  culture:"Airport staff speak very polite Korean to everyone (무엇을 도와드릴까요?). You don't need to match it. Simple -요 sentences are perfect. If you have a T-money card, you can tap it on the airport train.",
+  lesson:[
+   {ko:"○○ 가는 ○○ 어디서 타요?",ro:"eodiseo tayo?",en:"Where do I take the ○○ to ○○?",note:"Works for trains, buses and taxis anywhere."},
+   {ko:"공항철도",ro:"gonghang cheoldo",en:"Airport railroad (AREX)",note:"The train from the airport to Seoul Station."},
+   {ko:"표는 어디서 사요?",ro:"pyoneun eodiseo sayo?",en:"Where do I buy a ticket?",note:"Or skip it: a T-money card works on most trains."}],
+  script:[
+   {who:"them",ko:"안녕하세요, 무엇을 도와드릴까요?",en:"Hello, how may I help you?"},
+   {who:"me",type:"build",en:"Ask where to take the airport train to Seoul Station.",answer:["서울역 가는","공항철도","어디서","타요?"],extra:["주세요","몇 층"]},
+   {who:"them",ko:"지하 1층으로 내려가시면 돼요.",en:"Go down to basement level 1."},
+   {who:"me",type:"pick",en:"Ask where to buy a ticket.",options:["표는 어디서 사요?","승차권 구매처가 어디입니까?","표 줘"],answer:0,
+    notes:{1:"Sounds like a sign, not a person.",2:"반말 and a command. Rude."},kinds:{1:"formal",2:"rude"}},
+   {who:"them",ko:"교통카드 있으면 그냥 찍고 타셔도 돼요.",en:"If you have a transit card, you can just tap and ride."},
+   {who:"me",type:"pick",en:"React: oh, I see!",options:["아, 그렇구나! 감사합니다","이해했습니다","ㅇㅋ"],answer:0,
+    notes:{1:"Stiff. 아, 그렇구나 sounds natural.",2:"Text slang. Never say it out loud."},kinds:{1:"formal",2:"casual"}},
+   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank her."}],
+  mission:{title:"Ask an airport or station staff member for directions in Korean.",say:"서울역 가는 공항철도 어디서 타요?",tip:"Ticket? 표는 어디서 사요?"}}
+];
+window.PLACES.forEach((p,i)=>p.state=i===0?"open":"locked");
