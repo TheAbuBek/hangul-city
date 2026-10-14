@@ -109,6 +109,12 @@ function mapView(){
       pi=i;S.track(p.state==="done"?"place_replay":"place_start",p.code);go(p.kind==="basics"?"units":"intro");};
     g.addEventListener("click",open);g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});
   });
+  // Hidden team door: press and hold the title for 2 seconds to open the stats page.
+  const ht=v.querySelector(".hud-title");
+  if(ht){let t=null;const cancel=()=>{clearTimeout(t);t=null;};
+    ht.addEventListener("pointerdown",()=>{cancel();t=setTimeout(()=>{t=null;if(navigator.vibrate)try{navigator.vibrate(40);}catch(e){}location.href="stats.html";},2000);});
+    ["pointerup","pointerleave","pointercancel"].forEach(ev=>ht.addEventListener(ev,cancel));
+    ht.addEventListener("contextmenu",e=>e.preventDefault());}
   const rb=document.getElementById("reset"),ry=document.getElementById("resetyes"),rn=document.getElementById("resetno");
   if(rb) rb.onclick=()=>{armReset=true;render();};
   if(rn) rn.onclick=()=>{armReset=false;render();};
