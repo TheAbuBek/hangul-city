@@ -109,12 +109,19 @@ function mapView(){
       pi=i;S.track(p.state==="done"?"place_replay":"place_start",p.code);go(p.kind==="basics"?"units":"intro");};
     g.addEventListener("click",open);g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});
   });
-  // Hidden team door: press and hold the title for 2 seconds to open the stats page.
+  // Hidden team door: press and hold the title for 2 s, or tap it 5 times fast.
   const ht=v.querySelector(".hud-title");
-  if(ht){let t=null;const cancel=()=>{clearTimeout(t);t=null;};
-    ht.addEventListener("pointerdown",()=>{cancel();t=setTimeout(()=>{t=null;if(navigator.vibrate)try{navigator.vibrate(40);}catch(e){}location.href="stats.html";},2000);});
-    ["pointerup","pointerleave","pointercancel"].forEach(ev=>ht.addEventListener(ev,cancel));
-    ht.addEventListener("contextmenu",e=>e.preventDefault());}
+  if(ht){
+    let t=null, taps=[];
+    const openStats=()=>{try{navigator.vibrate&&navigator.vibrate(40);}catch(e){}location.href="stats.html";};
+    const start=()=>{clearTimeout(t);t=setTimeout(openStats,2000);};
+    const stop=()=>{clearTimeout(t);t=null;};
+    ht.addEventListener("touchstart",start,{passive:true});
+    ht.addEventListener("touchend",stop);ht.addEventListener("touchmove",stop,{passive:true});
+    ht.addEventListener("mousedown",start);ht.addEventListener("mouseup",stop);ht.addEventListener("mouseleave",stop);
+    ht.addEventListener("contextmenu",e=>e.preventDefault());
+    ht.addEventListener("click",()=>{const now=Date.now();taps=taps.filter(x=>now-x<2500);taps.push(now);if(taps.length>=5){taps=[];openStats();}});
+  }
   const rb=document.getElementById("reset"),ry=document.getElementById("resetyes"),rn=document.getElementById("resetno");
   if(rb) rb.onclick=()=>{armReset=true;render();};
   if(rn) rn.onclick=()=>{armReset=false;render();};
