@@ -84,8 +84,15 @@ async function load(){
     document.getElementById("demo").onclick=()=>{st.hidden=true;draw(demoRows(),true);};
     return;
   }
+  let key="";try{key=localStorage.getItem("ssk_team_key")||"";}catch(e){}
+  if(!key){
+    st.innerHTML=`<form id="kf" class="row" style="align-items:center"><span style="flex:1 1 100%">Team password needed to see the data.</span><input id="k" type="password" placeholder="Team password" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)"><button class="act" type="submit">Open</button></form>`;
+    document.getElementById("kf").onsubmit=ev=>{ev.preventDefault();try{localStorage.setItem("ssk_team_key",document.getElementById("k").value.trim());}catch(e){}load();};
+    return;
+  }
   try{
-    const r=await fetch(url);const j=await r.json();
+    const r=await fetch(url+"?key="+encodeURIComponent(key));const j=await r.json();
+    if(j.error==="key"){try{localStorage.removeItem("ssk_team_key");}catch(e){}st.className="note bad";st.textContent="Wrong team password. Reload the page and try again.";return;}
     st.hidden=true;draw(j.rows||[],false);
   }catch(e){
     st.className="note bad";st.textContent="Couldn't load data from the Google Sheet. Check that the Apps Script is deployed with access set to “Anyone”.";

@@ -34,7 +34,12 @@ function doPost(e) {
   }
 }
 
-function doGet() {
+const TEAM_KEY = "CHANGE-ME"; // set your own team password here
+
+function doGet(e) {
+  if (!e || !e.parameter || e.parameter.key !== TEAM_KEY) {
+    return ContentService.createTextOutput(JSON.stringify({ error: "key" })).setMimeType(ContentService.MimeType.JSON);
+  }
   const values = sheet_().getDataRange().getValues();
   const rows = values.slice(1).map(v => {
     const o = {};

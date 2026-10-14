@@ -100,7 +100,7 @@ function mapView(){
       ${nodes}
     </svg></div>
     <div class="panel">${armReset?`<p style="margin:0;font-weight:700">Reset all ${n} places?</p><div class="row"><button class="act" id="resetyes">Yes, reset</button><button class="act alt" id="resetno">Cancel</button></div>`:`<button class="act alt" id="reset">Reset progress</button>`}</div>
-    <div class="foot"><span>A 영어와컴퓨터 class project · Sejong University</span><a href="stats.html">Team stats</a></div>
+    <div class="foot"><span>A 영어와컴퓨터 class project · Sejong University</span></div>
   </div>`);
   app.replaceChildren(v);
   v.querySelectorAll(".bld").forEach(g=>{
