@@ -139,4 +139,3 @@ window.PLACES=[
    {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank her."}],
   mission:{title:"Ask an airport or station staff member for directions in Korean.",say:"서울역 가는 공항철도 어디서 타요?",tip:"Ticket? 표는 어디서 사요?"}}
 ];
-window.PLACES.forEach((p,i)=>p.state=i===0?"open":"locked");

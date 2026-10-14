@@ -66,5 +66,12 @@ const B={
     <rect x="26" y="-68" width="28" height="14" rx="3" fill="#A9CBEA" stroke="#2D3E57" stroke-width="2"/>
     <g transform="translate(-30 -36) rotate(-14)"><path d="M-22 0 L22 -2 Q30 0 22 3 L-22 4Z" fill="#fff" stroke="#2D3E57" stroke-width="2"/><path d="M-2 0 L-12 -14 L-6 -14 L8 0Z M-2 2 L-12 14 L-6 14 L8 2Z M-20 0 L-26 -8 L-22 -8 L-14 0Z" fill="#fff" stroke="#2D3E57" stroke-width="1.5"/></g>`
 };
+B.school=`<rect x="-54" y="-24" width="108" height="64" fill="#F5EBDD" stroke="#3B3346" stroke-width="2.5"/>
+    <path d="M-62 -24 L0 -54 L62 -24Z" fill="#7A5C9E" stroke="#3B3346" stroke-width="2.5"/>
+    <rect x="-40" y="-16" width="80" height="18" rx="3" fill="#FFFFFF" stroke="#3B3346" stroke-width="1.5"/>
+    <text x="0" y="-2" text-anchor="middle" font-size="12" font-weight="700" fill="#3B3346">가 나 다</text>
+    <g fill="#BFE0EF" stroke="#3B3346" stroke-width="1.5"><rect x="-44" y="8" width="20" height="16"/><rect x="24" y="8" width="20" height="16"/></g>
+    <rect x="-10" y="10" width="20" height="30" fill="#8A5A3A" stroke="#3B3346" stroke-width="2"/>
+    <rect x="-1" y="-74" width="2" height="22" fill="#3B3346"/><path d="M1 -74 h16 l-4 5 l4 5 h-16z" fill="#C0473A"/>`;
 window.buildingSVG=t=>B[t]||B.store;
 })();

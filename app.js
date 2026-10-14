@@ -9,10 +9,10 @@ const reduced=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").
 function speak(t){try{const u=new SpeechSynthesisUtterance(t.replace(/○○/g,""));u.lang="ko-KR";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
 
 // ---------- saved progress ----------
-let done=new Set();
-(function(){const s=store.get("ssk_progress2",null);
-  if(s&&s.states&&s.states.length===PLACES.length){PLACES.forEach((p,i)=>p.state=s.states[i]);done=new Set(s.done||[]);}})();
-function save(){store.set("ssk_progress2",{states:PLACES.map(p=>p.state),done:[...done]});}
+let done=new Set(), unitsDone=new Set();
+(function(){const s=store.get("ssk_progress3",null);
+  if(s&&s.states&&s.states.length===PLACES.length){PLACES.forEach((p,i)=>p.state=s.states[i]);done=new Set(s.done||[]);unitsDone=new Set(s.units||[]);}})();
+function save(){store.set("ssk_progress3",{states:PLACES.map(p=>p.state),done:[...done],units:[...unitsDone]});}
 
 let profile=store.get("ssk_profile",null);
 let view=profile?"map":"welcome";
@@ -106,13 +106,13 @@ function mapView(){
   v.querySelectorAll(".bld").forEach(g=>{
     const open=()=>{const i=+g.dataset.i,p=PLACES[i];
       if(p.state==="locked"){toast(`Locked. Finish ${PLACES[i-1].ko} first to unlock ${p.ko}.`);S.track("locked_tap",p.code);return;}
-      pi=i;S.track(p.state==="done"?"place_replay":"place_start",p.code);go("intro");};
+      pi=i;S.track(p.state==="done"?"place_replay":"place_start",p.code);go(p.kind==="basics"?"units":"intro");};
     g.addEventListener("click",open);g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});
   });
   const rb=document.getElementById("reset"),ry=document.getElementById("resetyes"),rn=document.getElementById("resetno");
   if(rb) rb.onclick=()=>{armReset=true;render();};
   if(rn) rn.onclick=()=>{armReset=false;render();};
-  if(ry) ry.onclick=()=>{armReset=false;done=new Set();PLACES.forEach((p,i)=>p.state=INITIAL[i]);save();S.track("reset");render();toast("Progress reset. Back to the start.");window.scrollTo({top:0});};
+  if(ry) ry.onclick=()=>{armReset=false;done=new Set();unitsDone=new Set();PLACES.forEach((p,i)=>p.state=INITIAL[i]);save();S.track("reset");render();toast("Progress reset. Back to the start.");window.scrollTo({top:0});};
   if(cur>0){const target=v.querySelectorAll(".bld")[cur];setTimeout(()=>{try{target.scrollIntoView({block:"center",behavior:reduced?"auto":"smooth"});}catch(e){}},60);}
 }
 
@@ -305,10 +305,102 @@ function mission(){
   if(q("home"))q("home").onclick=()=>go("map");
 }
 
+
+// ---------- 한글 학교 (basics) ----------
+let ui=0, uphase="cards", uk=0, uq=0, umiss=0, built={L:null,V:null};
+const LJ="ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ", VJ="ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ";
+const compose=(l,v)=>String.fromCharCode(0xAC00+(LJ.indexOf(l)*21+VJ.indexOf(v))*28);
+const decompose=ch=>{const c=ch.charCodeAt(0)-0xAC00;return {L:LJ[Math.floor(c/588)],V:VJ[Math.floor((c%588)/28)]};};
+function finishBasics(how){
+  const p=PLACES[pi], next=PLACES[pi+1], fresh=p.state!=="done";
+  p.state="done";if(next&&next.state==="locked")next.state="open";save();
+  S.track("basics_done",p.code,how);
+  if(fresh&&next)setTimeout(()=>toast(`${p.ko} cleared! ${next.ko} is now unlocked.`),300);
+}
+function unitsView(){
+  const p=PLACES[pi], U=p.units;
+  const v=sceneShell(p,`<div class="panel">
+      <p class="label">${unitsDone.size} of ${U.length} units done</p>
+      <div class="units">${U.map((u,i)=>`<button class="unit ${unitsDone.has(u.id)?"done":""}" data-u="${i}">
+        <span class="unum">${i+1}</span><span class="uname"><b>${u.ko}</b><span>${u.en}</span></span>
+        <span class="ustate">${unitsDone.has(u.id)?"✓ Done":"Start"}</span></button>`).join("")}</div>
+      <div class="note info">${p.culture}</div>
+      ${p.state!=="done"?`<button class="act alt" id="skip">I can already read Korean. Skip to the map</button>`:""}
+    </div>`);
+  app.replaceChildren(v);wireBack();
+  say(unitsDone.size?"잘하고 있어요! 계속해 봐요.":"안녕하세요! 저는 한글 선생님이에요.",unitsDone.size?"You're doing great! Let's keep going.":"Hello! I'm your Hangul teacher.");
+  v.querySelectorAll("[data-u]").forEach(b=>b.onclick=()=>{ui=+b.dataset.u;uphase="cards";uk=0;uq=0;umiss=0;built={L:null,V:null};S.track("unit_start",p.code,U[ui].id);go("unit");});
+  const sk=document.getElementById("skip");
+  if(sk) sk.onclick=()=>{finishBasics("skipped");go("map");};
+}
+function unitView(){
+  const p=PLACES[pi], u=p.units[ui];
+  if(uphase==="cards"){
+    const c=u.cards[uk], last=uk===u.cards.length-1;
+    const v=sceneShell(p,`<div class="panel">
+        <div class="dots">${u.cards.map((_,i)=>`<i class="${i===uk?"on":i<uk?"past":""}"></i>`).join("")}</div>
+        <p class="label">${u.ko} · ${u.en} · ${uk+1} of ${u.cards.length}</p>
+        <div class="bigglyph">${c.big}</div>
+        <div class="gsound">${c.sound}</div>
+        <p class="phrase-note">${c.note}</p>
+        ${c.ex?`<p class="gex">${c.ex}</p>`:""}
+        <div class="row">${uk>0?`<button class="act alt" id="prev">Back</button>`:""}<button class="act alt" id="hear">▶ Hear it</button><button class="act" id="next">${last?"Quiz time":"Next"}</button></div>
+      </div>`);
+    app.replaceChildren(v);wireBack();
+    say(uk===0?u.intro:c.say,uk===0?u.introEn:"");
+    if(uk===0)setTimeout(()=>{if(view==="unit"&&uphase==="cards"&&uk===0)talk(c.say);},1600);
+    document.getElementById("hear").onclick=()=>talk(c.say);
+    const pv=document.getElementById("prev");if(pv)pv.onclick=()=>{uk--;render();};
+    document.getElementById("next").onclick=()=>{if(last){uphase="quiz";uq=0;}else uk++;render();};
+    return;
+  }
+  if(uphase==="done"){
+    const v=sceneShell(p,`<div class="ticket stamped"><div class="stub"><span>${u.ko} · ${u.en}</span><span>DONE</span></div>
+      <div class="body"><h2>Unit complete${umiss?` · ${umiss} slip${umiss>1?"s":""}`:" · perfect"}</h2>
+      <div class="row"><button class="act" id="back2">Back to 한글 학교</button></div></div></div>`);
+    app.replaceChildren(v);wireBack();react("happy");
+    say(umiss?"잘했어요!":"완벽해요!",umiss?"Well done!":"Perfect!");
+    document.getElementById("back2").onclick=()=>go("units");
+    return;
+  }
+  const q=u.quiz[uq];
+  const v=sceneShell(p,`<div class="turn"><div class="dots">${u.quiz.map((_,i)=>`<i class="${i===uq?"on":i<uq?"past":""}"></i>`).join("")}</div><div id="qbox"></div><div id="nt"></div></div>`);
+  app.replaceChildren(v);wireBack();
+  const box=document.getElementById("qbox"), nt=document.getElementById("nt");
+  const right=()=>{S.track("basics_right",p.code,u.id);react("happy");
+    setTimeout(()=>{uq++;built={L:null,V:null};if(uq>=u.quiz.length){uphase="done";unitsDone.add(u.id);save();S.track("unit_done",p.code,u.id+":"+umiss);
+      if(unitsDone.size===p.units.length&&p.state!=="done")finishBasics("completed");}render();},reduced?0:600);};
+  const wrong=msg=>{umiss++;S.track("basics_wrong",p.code,u.id);react("confused");nt.replaceChildren(el(`<div class="note bad">${msg}</div>`));};
+  if(q.type==="pick"){
+    box.innerHTML=`${q.speak?`<p class="hint">${q.prompt}</p><button class="act alt" id="play" style="display:block">▶ Play again</button>`:`<p class="hint">${/[가-힣ㄱ-ㅣ0-9]/.test(q.prompt)&&q.prompt.length<12?"What is this?":"Which one fits?"}</p><div class="${q.prompt.length<12?"bigglyph":"qtext"}">${q.prompt}</div>`}<div class="opts grid2opts" id="op"></div>`;
+    say(q.speak?"잘 들어 보세요.":"이거 뭐예요?",q.speak?"Listen carefully.":"What's this?");
+    if(q.speak){setTimeout(()=>speak(q.speak),900);document.getElementById("play").onclick=()=>speak(q.speak);}
+    shuffle(q.options.map((o,i)=>i)).forEach(i=>{const b=el(`<button class="opt">${q.options[i]}</button>`);
+      b.onclick=()=>{if(i===q.answer){b.classList.add("right");if(/[가-힣]/.test(q.options[i]))speak(q.options[i]);right();}else{b.classList.add("wrong");wrong("Not quite. Try another.");}};
+      document.getElementById("op").appendChild(b);});
+  }else{
+    const t=decompose(q.target), Ls=["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅎ"], Vs=["ㅏ","ㅓ","ㅗ","ㅜ","ㅡ","ㅣ"];
+    const draw=()=>{
+      const shown=built.L&&built.V?compose(built.L,built.V):(built.L||"")+(built.V||"");
+      box.innerHTML=`<p class="hint">${q.prompt}</p><div class="bigglyph builtg">${shown||"&nbsp;"}</div>
+        <p class="label">Consonant</p><div class="bank">${Ls.map(l=>`<button class="tile ${built.L===l?"sel":""}" data-l="${l}">${l}</button>`).join("")}</div>
+        <p class="label">Vowel</p><div class="bank">${Vs.map(x=>`<button class="tile ${built.V===x?"sel":""}" data-v="${x}">${x}</button>`).join("")}</div>
+        <button class="act" id="chk" ${built.L&&built.V?"":"disabled"}>Check</button>`;
+      box.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{built.L=b.dataset.l;draw();});
+      box.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{built.V=b.dataset.v;draw();if(built.L)speak(compose(built.L,built.V));});
+      document.getElementById("chk").onclick=()=>{
+        if(built.L===t.L&&built.V===t.V){speak(q.target);right();}
+        else wrong(built.L!==t.L?"Check the consonant. Listen to the sound again.":"Close! The vowel is off.");
+      };
+    };
+    say("만들어 보세요!","Build it!");draw();
+  }
+}
+
 function go(v){view=v;render();window.scrollTo({top:0});}
 function render(){
   clearInterval(typeTimer);
-  ({welcome,map:mapView,intro,learn,practice})[view]();
+  ({welcome,map:mapView,intro,learn,practice,units:unitsView,unit:unitView})[view]();
 }
 render();
 })();
