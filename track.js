@@ -16,11 +16,12 @@
     const url=window.SSK_ENDPOINT;
     if(!url||sending||!queue.length) return;
     sending=true;
+    // Take the batch out of the queue before sending, so a page reload mid-send can't send it twice.
     const batch=queue.slice(0,50);
+    queue=queue.slice(batch.length);store.set("ssk_queue",queue);
     try{
       await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({rows:batch})});
-      queue=queue.slice(batch.length);store.set("ssk_queue",queue);
-    }catch(e){/* offline: keep the queue and try again next time */}
+    }catch(e){queue=batch.concat(queue);store.set("ssk_queue",queue);/* offline: try again next time */}
     sending=false;
     if(queue.length) setTimeout(flush,1500);
   }
