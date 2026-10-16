@@ -47,7 +47,8 @@ const missionDone=p=>P.missions.includes(p.code);
 const unitsDone=()=>new Set(P.units);
 
 let profile=store.get("ssk_profile",null);
-if(profile&&!profile.role)profile=null; // old sign-ups re-register once for the new questions
+if(profile&&!profile.role)profile=null;
+if(profile&&!profile.form){profile.form="A";profile.signupAt=profile.signupAt||Date.now();} // old sign-ups re-register once for the new questions
 let cityId=store.get("hc_city",null);
 const city=()=>CITIES.find(c=>c.id===cityId)||CITIES[0];
 let PLACES=[];
@@ -106,6 +107,7 @@ function welcome(){
     draft.country=document.getElementById("country").value.trim();
     if(!draft.nick||!draft.role||!draft.home||!draft.level||!draft.months){
       document.getElementById("err").replaceChildren(el(`<div class="note bad">Fill in your nickname and pick one answer in each row.</div>`));return;}
+    draft.signupAt=Date.now();draft.form=Math.random()<0.5?"A":"B";
     profile=draft;store.set("ssk_profile",profile);
     S.track("signup","",JSON.stringify({country:draft.country,role:draft.role,home:draft.home}));S.track("session_start");
     setCity(draft.home==="busan"?"busan":"seoul");
@@ -114,7 +116,10 @@ function welcome(){
 }
 
 // ---------- placement test ----------
-const PLACEMENT=[
+// Two matched forms of the level check. Each learner gets one as the pre-test and the other as the post-test
+// (counterbalanced), so the post-test is not the same questions a second time. Correct option is always index 0.
+const TEST_FORMS={
+ A:[
   {k:"read",prompt:"버스",q:"What does this word mean?",options:["bus","beer","boss","bread"]},
   {k:"read",prompt:"커피",q:"What does this word mean?",options:["coffee","copy","cup","coupon"]},
   {k:"num",prompt:"15,000원",q:"How do you say this price?",options:["만 오천 원","일만 오천 원","십오천 원","열다섯 천 원"]},
@@ -122,8 +127,19 @@ const PLACEMENT=[
   {k:"polite",prompt:"A clerk asks if you need a bag. You don't.",q:"What do you say?",options:["아뇨, 괜찮아요","봉투가 필요하지 않습니다","싫어"]},
   {k:"polite",prompt:"Ending an email to your professor.",q:"Which is right?",options:["감사합니다.","고마워!","ㅇㅋ 감사요"]},
   {k:"meaning",prompt:"어떻게 오셨어요?",q:"At an office, this means…",options:["How can I help you?","How did you get here?","How are you?","Where are you from?"]},
-  {k:"listen",listen:"덜 맵게 해 주세요",prompt:"Listen.",q:"What did you hear?",options:["Less spicy, please","More spicy, please","It's too spicy","Not spicy at all?"]}
-];
+  {k:"listen",listen:"덜 맵게 해 주세요",prompt:"Listen.",q:"What did you hear?",options:["Less spicy, please","More spicy, please","It's too spicy","Not spicy at all?"]}],
+ B:[
+  {k:"read",prompt:"택시",q:"What does this word mean?",options:["taxi","tax","text","ticket"]},
+  {k:"read",prompt:"카드",q:"What does this word mean?",options:["card","cart","code","guard"]},
+  {k:"num",prompt:"25,000원",q:"How do you say this price?",options:["이만 오천 원","이십오천 원","스물다섯 천 원","이만 오백 원"]},
+  {k:"num",prompt:"Three people (at a restaurant)",q:"Pick the natural answer.",options:["세 명이요","삼 명이요","셋 명이요","세 개요"]},
+  {k:"polite",prompt:"A clerk asks if you want a receipt. You don't.",q:"What do you say?",options:["아뇨, 괜찮아요","영수증이 필요하지 않습니다","싫어"]},
+  {k:"polite",prompt:"Asking a bus driver if the bus goes to 강남역.",q:"Which is right?",options:["기사님, 이거 강남역 가요?","야, 강남역 가?","본 버스는 강남역으로 운행합니까?"]},
+  {k:"meaning",prompt:"몇 분이세요?",q:"At a restaurant door, this means…",options:["How many people?","How many minutes?","What time is it?","Who are you?"]},
+  {k:"listen",listen:"수건 하나 더 주세요",prompt:"Listen.",q:"What did you hear?",options:["One more towel, please","Two towels, please","Where is the towel?","No towel, thanks"]}]
+};
+const preForm=()=>(profile&&profile.form)||"A", postForm=()=>preForm()==="A"?"B":"A";
+let testMode="pre";
 let pq=0, pscore=0, porder=[];
 function placeIntro(){
   const v=el(`<div class="col">
@@ -133,13 +149,13 @@ function placeIntro(){
     <div class="panel"><button class="act" id="go">Take the test</button>
       <button class="act alt" id="beg">I'm a beginner, skip the test</button></div></div>`);
   app.replaceChildren(v);
-  document.getElementById("go").onclick=()=>{pq=0;pscore=0;porder=PLACEMENT.map(q=>({...q,order:shuffle(q.options.map((_,i)=>i))}));go("placement");};
+  document.getElementById("go").onclick=()=>{testMode="pre";pq=0;pscore=0;porder=TEST_FORMS[preForm()].map(q=>({...q,order:shuffle(q.options.map((_,i)=>i))}));go("placement");};
   document.getElementById("beg").onclick=()=>{S.track("placement_skip","","beginner");applyLevel("beginner",null);go("map");toast("Welcome! Start at 한글 학교, the first stop on the map.");};
 }
 function placement(){
   const q=porder[pq];
   const v=el(`<div class="col">
-    <div class="topbar"><span class="label">Level check · ${pq+1} of ${porder.length}</span><button class="back" id="quit" style="flex:none">Skip test</button></div>
+    <div class="topbar"><span class="label">${testMode==="post"?"Progress check":"Level check"} · ${pq+1} of ${porder.length}</span><button class="back" id="quit" style="flex:none">${testMode==="post"?"Later":"Skip test"}</button></div>
     <div class="progress"><i style="width:${100*pq/porder.length}%"></i></div>
     <div class="panel">
       ${q.listen?`<button class="act alt" id="play">▶ Play the sentence</button>`:`<div class="${q.prompt.length<10?"bigglyph":"qtext"}">${q.prompt}</div>`}
@@ -149,10 +165,10 @@ function placement(){
     </div></div>`);
   app.replaceChildren(v);
   if(q.listen){setTimeout(()=>speak(q.listen),400);document.getElementById("play").onclick=()=>speak(q.listen);}
-  const next=ok=>{if(ok)pscore++;S.track("placement_q","",q.k+":"+(ok?1:0));pq++;if(pq>=porder.length)finishPlacement();else render();};
+  const next=ok=>{if(ok)pscore++;S.track(testMode==="post"?"posttest_q":"placement_q","",q.k+":"+(ok?1:0));pq++;if(pq>=porder.length)(testMode==="post"?finishPost():finishPlacement());else render();};
   v.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>next(+b.dataset.i===0));
   document.getElementById("idk").onclick=()=>next(false);
-  document.getElementById("quit").onclick=()=>{S.track("placement_skip","","quit at "+pq);applyLevel("beginner",null);go("map");};
+  document.getElementById("quit").onclick=()=>{if(testMode==="post"){S.track("posttest_later","","at "+pq);postSnooze=true;go("map");return;}S.track("placement_skip","","quit at "+pq);applyLevel("beginner",null);go("map");};
 }
 function finishPlacement(){
   const lvl=pscore>=7?"advanced":pscore>=4?"intermediate":"beginner";
@@ -161,11 +177,66 @@ function finishPlacement(){
     <div class="panel"><button class="act" id="ok">Go to the map</button>
     <p class="small">Feels wrong? Pick your level yourself:</p>${seg("lv",[["beginner","Beginner"],["intermediate","Intermediate"],["advanced","Advanced"]])}</div></div>`);
   app.replaceChildren(v);
-  S.track("placement","",`${pscore}/8:${lvl}`);
+  S.track("placement","",`${pscore}/8:${lvl}:${preForm()}`);
   let chosen=lvl;
   v.querySelectorAll("[data-v]").forEach(b=>{if(b.dataset.v===lvl)b.setAttribute("aria-pressed","true");
     b.onclick=()=>{v.querySelectorAll("[data-v]").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");chosen=b.dataset.v;};});
   document.getElementById("ok").onclick=()=>{if(chosen!==lvl)S.track("placement_override","",`${lvl}->${chosen}`);applyLevel(chosen,pscore);go("map");};
+}
+// ---------- post-test (learning gain) ----------
+let postSnooze=false, surveySnooze=false;
+const clearedCount=()=>CITIES.filter(c=>!c.soon).flatMap(c=>c.places).filter((p,i,a)=>p.kind!=="basics"&&a.indexOf(p)===i&&stateOf(p)==="done").length;
+const daysSince=t=>t?(Date.now()-t)/864e5:0;
+function postDue(){
+  if(!profile||profile.postDone)return false;
+  if(/posttest/.test(location.search))return true;
+  return daysSince(profile.signupAt)>=7||clearedCount()>=5;
+}
+function surveyDue(){
+  if(!profile||profile.surveyDone)return false;
+  if(/survey/.test(location.search))return true;
+  return clearedCount()>=3;
+}
+function startPost(){testMode="post";pq=0;pscore=0;porder=TEST_FORMS[postForm()].map(q=>({...q,order:shuffle(q.options.map((_,i)=>i))}));S.track("posttest_start","",postForm());go("placement");}
+function finishPost(){
+  const pre=(profile.testScore==null)?null:profile.testScore;
+  profile.postDone=true;profile.postScore=pscore;store.set("ssk_profile",profile);
+  S.track("posttest","",`${pscore}/8:pre=${pre==null?"none":pre}:${postForm()}`);
+  const diff=pre==null?null:pscore-pre;
+  const v=el(`<div class="col"><div class="hero"><p class="label">Progress check</p>
+      <h1>${pscore}/8</h1>
+      <p>${pre==null?"You skipped the first level check, so there's nothing to compare with. Thanks, this still helps.":diff>0?`Up ${diff} from your first check (${pre}/8). Your practice is working.`:diff===0?`Same as your first check (${pre}/8). Keep going, the review quizzes help most.`:`Your first check was ${pre}/8. A different set of questions can be harder, keep practising.`}</p>
+      <div class="hero-chars"><div>${charSVG(BASICS.char)}</div></div></div>
+    <div class="panel"><button class="act" id="ok">Back to the map</button></div></div>`);
+  app.replaceChildren(v);document.getElementById("ok").onclick=()=>go("map");
+}
+// ---------- feedback survey ----------
+const SURVEY=[
+  {k:"easy",q:"The app was easy to use."},
+  {k:"real",q:"The conversations felt like real Korean."},
+  {k:"confident",q:"I feel more confident going to these places now."},
+  {k:"recommend",q:"I would recommend Hangul City to a friend."}
+];
+function survey(){
+  const ans={};
+  const v=el(`<div class="col">
+    <div class="topbar"><span class="label">Quick feedback · 1 minute</span><button class="back" id="later" style="flex:none">Later</button></div>
+    <div class="panel">${SURVEY.map(s=>`<div class="field"><label>${s.q}</label>
+        <div class="likert" data-k="${s.k}">${[1,2,3,4,5].map(n=>`<button type="button" data-v="${n}" aria-label="${n} of 5">${n}</button>`).join("")}</div>
+        <div class="likert-ends"><span>Disagree</span><span>Agree</span></div></div>`).join("")}
+      <div class="field"><label for="fb">What should we change or add? (optional)</label>
+        <textarea id="fb" maxlength="180" rows="3" placeholder="Don't include your name or contact details"></textarea></div>
+      <div id="err"></div><button class="act" id="send">Send feedback</button></div></div>`);
+  app.replaceChildren(v);
+  v.querySelectorAll(".likert").forEach(g=>g.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    g.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");ans[g.dataset.k]=+b.dataset.v;}));
+  document.getElementById("later").onclick=()=>{S.track("survey_later");surveySnooze=true;go("map");};
+  document.getElementById("send").onclick=()=>{
+    if(SURVEY.some(s=>!ans[s.k])){document.getElementById("err").replaceChildren(el(`<div class="note bad">Pick a number for each of the 4 statements.</div>`));return;}
+    S.track("survey","",SURVEY.map(s=>`${s.k}=${ans[s.k]}`).join("|"));
+    const t=document.getElementById("fb").value.trim();if(t)S.track("survey_text","",t.slice(0,180));
+    profile.surveyDone=true;store.set("ssk_profile",profile);go("map");toast("Thank you! 감사합니다.");
+  };
 }
 function applyLevel(lvl,score){
   profile.tested=lvl;profile.testScore=score;store.set("ssk_profile",profile);
@@ -213,6 +284,8 @@ function mapView(){
   const v=el(`<div class="col">
     <div class="hud"><div><b class="hud-title">한글 시티</b><span class="hello">안녕, ${esc(profile.nick)}! · ${cfg().name}</span></div>
       <div class="hud-score"><b>${cleared}<small>/${n}</small></b><span>${city().ko} cleared · ${stars} ★</span></div></div>
+    ${postDue()&&!postSnooze?`<div class="banner"><div><b>Progress check</b><span>8 questions, 2 minutes. See how much you've improved.</span></div><div class="row"><button class="act" id="post">Start</button><button class="act alt" id="postlater">Later</button></div></div>`
+      :surveyDue()&&!surveySnooze?`<div class="banner"><div><b>Quick feedback</b><span>4 questions, 1 minute. It helps us make the app better.</span></div><div class="row"><button class="act" id="surv">Give feedback</button><button class="act alt" id="survlater">Later</button></div></div>`:""}
     <div class="cities">${CITIES.map(c=>`<button class="city ${c.id===cityId?"on":""} ${c.soon?"soon":""}" data-c="${c.id}">${c.ko}<small>${c.soon?"soon":c.en}</small></button>`).join("")}</div>
     <button class="act compete" id="compete">대결 · Compete with friends</button>
     <div class="mapwrap"><svg class="map" viewBox="0 0 ${W} ${H}" aria-label="Map of ${city().en}">
@@ -234,6 +307,9 @@ function mapView(){
   v.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const c=CITIES.find(x=>x.id===b.dataset.c);
     if(c.soon){toast(`${c.ko} ${c.en} is coming later.`);S.track("city_soon_tap","",c.id);return;}
     setCity(c.id);S.track("city_switch","",c.id);render();window.scrollTo({top:0});});
+  const qq=id=>document.getElementById(id);
+  if(qq("post")){qq("post").onclick=startPost;qq("postlater").onclick=()=>{S.track("posttest_later","","banner");postSnooze=true;render();};}
+  if(qq("surv")){qq("surv").onclick=()=>{S.track("survey_open");go("survey");};qq("survlater").onclick=()=>{S.track("survey_later","","banner");surveySnooze=true;render();};}
   document.getElementById("compete").onclick=()=>{S.track("rooms_open");go("rooms");};
   // Hidden team door: press and hold the title for 2 s, or tap it 5 times fast.
   const ht=v.querySelector(".hud-title");
@@ -634,7 +710,7 @@ function rooms(){
 function go(v){view=v;render();window.scrollTo({top:0});}
 function render(){
   clearInterval(typeTimer);clearInterval(turnTimer);
-  ({welcome,placeIntro,placement,map:mapView,intro,learn,practice,review,missionView,units:unitsView,unit:unitView,rooms})[view]();
+  ({welcome,placeIntro,placement,survey,map:mapView,intro,learn,practice,review,missionView,units:unitsView,unit:unitView,rooms})[view]();
 }
 render();
 })();

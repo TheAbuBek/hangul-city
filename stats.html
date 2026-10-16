@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=10161220">
+<link rel="stylesheet" href="style.css?v=10170132">
 <style>
 .wide{max-width:880px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
@@ -43,9 +43,9 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
   <div id="status" class="note info">Loading…</div>
   <div id="out" hidden></div>
 </div>
-<script src="config.js?v=10161220"></script>
-<script src="data.js?v=10161220"></script>
-<script src="basics.js?v=10161220"></script>
+<script src="config.js?v=10170132"></script>
+<script src="data.js?v=10170132"></script>
+<script src="basics.js?v=10170132"></script>
 <script>
 const ALLP=[];window.CITIES.filter(c=>!c.soon).forEach(c=>c.places.forEach(p=>{if(!ALLP.find(x=>x.code===p.code))ALLP.push({code:p.code,ko:p.ko,city:c.ko});}));
 const PL=ALLP.map(p=>p.code), NAMES=Object.fromEntries(ALLP.map(p=>[p.code,p.ko]));
@@ -66,7 +66,8 @@ function demoRows(){
     const push=(event,place="",detail="")=>rows.push({time:new Date(t+=6e4).toISOString(),user:uid,nickname:nick,event,place,detail:String(detail),country:c,level:l,months:m});
     push("signup","",JSON.stringify({country:c,role:roles[u%5],home:homes[u%5]}));
     const score=Math.max(0,Math.min(8,{none:1,beginner:3,intermediate:5,advanced:7}[l]+Math.round(Math.random()*3-1.5)));
-    if(Math.random()<.2)push("placement_skip","","beginner");else push("placement","",`${score}/8:${score>=7?"advanced":score>=4?"intermediate":"beginner"}`);
+    const form=u%2?"A":"B", skipped=Math.random()<.2;
+    if(skipped)push("placement_skip","","beginner");else push("placement","",`${score}/8:${score>=7?"advanced":score>=4?"intermediate":"beginner"}:${form}`);
     for(let d=0;d<days;d++){
       t+=864e5*(0.6+Math.random()*1.8);push("session_start");
       const i=Math.min(seoul.length-1,1+Math.floor(d*reach*1.3));const code=seoul[i];
@@ -79,6 +80,8 @@ function demoRows(){
         if(sc>=6&&Math.random()<.55)push("mission_done",code,["yes","yes","partly","partly","no"][Math.floor(Math.random()*5)]);else push("mission_later",code);}
       else push("place_quit",code);
     }
+    if(days>=4){const post=Math.min(8,(skipped?2:score)+Math.round(Math.random()*3-0.5));push("posttest","",`${post}/8:pre=${skipped?"none":score}:${form==="A"?"B":"A"}`);}
+    if(days>=3&&Math.random()<.7){const r=()=>3+Math.round(Math.random()*2);push("survey","",`easy=${r()}|real=${r()}|confident=${Math.max(1,r()-1)}|recommend=${r()}`);if(u%4===0)push("survey_text","",["More Busan dialect please","Voice is too fast sometimes","Loved the bank lesson","Add Vietnamese menus"][u%4===0?(u/4)%4:0]);}
     if(u%3===0){push("room_join","","1234");for(let q=0;q<10;q++)push("room_answer","",`1234:${Math.random()<.7?1:0}:meaning`);push("room_end","",`1234:${1+u%6}/6:${Math.round(Math.random()*8000)}`);}
   }
   return rows;
@@ -154,6 +157,23 @@ function draw(rows,isDemo){
   const ra=rows.filter(r=>r.event==="room_answer"), roomGames=new Set(rows.filter(r=>r.event==="room_start"||r.event==="room_end").map(r=>String(r.detail).split(":")[0])).size;
   const roomPlayers=new Set(rows.filter(r=>r.event==="room_join"||r.event==="room_host").map(r=>r.user)).size;
 
+  // learning gain: pre-test (placement) vs post-test, same user
+  const pre={},post={},order={};
+  rows.forEach(r=>{if(r.event==="placement"){const p=String(r.detail).split(":");pre[r.user]=+p[0].split("/")[0];order[r.user]=p[2]||"A";}
+    if(r.event==="posttest")post[r.user]=+String(r.detail).split("/")[0];});
+  const paired=Object.keys(post).filter(u=>u in pre);
+  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+  const preAvg=avg(paired.map(u=>pre[u])), postAvg=avg(paired.map(u=>post[u]));
+  const gains=paired.map(u=>post[u]-pre[u]);
+  const better=gains.filter(g=>g>0).length, same=gains.filter(g=>g===0).length, worse=gains.filter(g=>g<0).length;
+  const byOrder=o=>{const us=paired.filter(u=>order[u]===o);return {n:us.length,g:avg(us.map(u=>post[u]-pre[u]))};};
+  const oA=byOrder("A"), oB=byOrder("B");
+  // survey
+  const SQ=[["easy","Easy to use"],["real","Felt like real Korean"],["confident","More confident at these places"],["recommend","Would recommend"]];
+  const sv={};SQ.forEach(([k])=>sv[k]=[]);
+  rows.filter(r=>r.event==="survey").forEach(r=>String(r.detail).split("|").forEach(kv=>{const [k,v]=kv.split("=");if(sv[k])sv[k].push(+v);}));
+  const svN=rows.filter(r=>r.event==="survey").length;
+  const texts=rows.filter(r=>r.event==="survey_text").slice(-20).reverse();
   const navy=css("--navy"),ok=css("--ok"),accC=css("--accent"),mut=css("--muted");
   out.innerHTML=`
   ${isDemo?`<div class="demo">DEMO DATA. Randomly generated to preview the dashboard. Not real users.</div>`:""}
@@ -168,6 +188,15 @@ function draw(rows,isDemo){
   <div class="panel"><h2>Daily active users</h2><p class="sub">Unique users who opened the app each day</p>
     <div class="cols">${dau.map(v=>`<div style="height:${100*v/maxDau}%"><span>${v}</span></div>`).join("")}</div>
     <div class="colx">${days.map((d,i)=>`<span>${i%Math.ceil(days.length/8)===0?d.slice(5):""}</span>`).join("")}</div></div>
+  <div class="grid2">
+    <div class="panel"><h2>Learning gain</h2><p class="sub">Same users: first level check vs. progress check (8 points each, n = ${paired.length})</p>
+      ${bars([["Before",preAvg,preAvg.toFixed(1)+" / 8"],["After",postAvg,postAvg.toFixed(1)+" / 8"]],8,navy)}
+      <p class="sub">Average change: <b>${paired.length?(postAvg-preAvg>=0?"+":"")+(postAvg-preAvg).toFixed(1):"–"}</b> points · improved ${better} · same ${same} · lower ${worse}</p>
+      <p class="sub">Form check (should be similar): A then B ${oA.n?(oA.g>=0?"+":"")+oA.g.toFixed(1):"–"} (n=${oA.n}) · B then A ${oB.n?(oB.g>=0?"+":"")+oB.g.toFixed(1):"–"} (n=${oB.n})</p></div>
+    <div class="panel"><h2>Feedback survey</h2><p class="sub">Average agreement, 1 = disagree, 5 = agree (n = ${svN})</p>
+      ${bars(SQ.map(([k,l])=>[l,avg(sv[k]),sv[k].length?avg(sv[k]).toFixed(1):"–"]),5,ok)}
+      ${texts.length?`<div class="tw"><table><tr><th>Latest comments</th></tr>${texts.map(t=>`<tr><td>${String(t.detail).replace(/[<>&]/g,"")}</td></tr>`).join("")}</table></div>`:""}</div>
+  </div>
   <div class="grid2">
     <div class="panel"><h2>Retention</h2><p class="sub">Review-quiz accuracy: the place just learned vs. places learned earlier</p>
       ${bars([["Just learned",acc(qCur),acc(qCur)+"% (n="+qCur.length+")"],["Learned earlier",acc(qOld),acc(qOld)+"% (n="+qOld.length+")"]],100,ok)}
