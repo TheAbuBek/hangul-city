@@ -321,3 +321,5 @@ button{font:inherit;color:inherit}
 .revq{border-top:1px solid var(--line);padding:8px 0}
 .revq p{margin:4px 0}
 .opt[disabled]{opacity:.55;cursor:default}
+
+.sign-en{font-family:var(--f-body);font-size:10.5px;fill:var(--muted)}

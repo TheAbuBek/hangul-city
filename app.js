@@ -280,9 +280,10 @@ function mapView(){
       <ellipse cx="0" cy="44" rx="70" ry="12" fill="var(--plot)"/>
       ${st==="open"?`<circle class="ring" cx="0" cy="0" r="74" fill="none" stroke="var(--accent)" stroke-width="3"/>`:""}
       <g class="art">${buildingSVG(p.scene)}</g>
-      <g transform="translate(0 66)"><rect x="-66" y="-14" width="132" height="${locked?40:28}" rx="8" fill="var(--sign)" stroke="var(--sign-line)" stroke-width="1.5"/>
+      <g transform="translate(0 66)"><rect x="-72" y="-14" width="144" height="${locked?56:42}" rx="8" fill="var(--sign)" stroke="var(--sign-line)" stroke-width="1.5"/>
         <text y="4" text-anchor="middle" class="sign-ko">${i+1}. ${p.ko}</text>
-        ${locked?`<text y="20" text-anchor="middle" class="sign-lock">Finish ${prev.ko} first</text>`:""}</g>
+        <text y="20" text-anchor="middle" class="sign-en">${p.en}</text>
+        ${locked?`<text y="36" text-anchor="middle" class="sign-lock">Finish ${prev.ko} first</text>`:""}</g>
       ${locked?`<g transform="translate(0 -6)" class="lock"><circle r="20" fill="var(--lock-bg)"/><path d="M-7 -2 v-5 a7 7 0 0 1 14 0 v5" fill="none" stroke="#fff" stroke-width="3.2"/><rect x="-10" y="-2" width="20" height="15" rx="3" fill="#fff"/><circle cy="5" r="2.4" fill="var(--lock-bg)"/></g>`:""}
       ${missionDone(p)?`<g transform="translate(-52 -50)"><circle r="15" fill="var(--gold)"/><path d="M0 -9 L2.6 -3 L9 -2.8 L4 1.4 L5.6 8 L0 4.4 L-5.6 8 L-4 1.4 L-9 -2.8 L-2.6 -3Z" fill="#fff"/></g>`:""}
       ${isDone?`<g transform="translate(52 -50)"><circle r="15" fill="var(--ok)"/><path d="M-7 0 l5 5 l9 -10" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>`:""}
@@ -308,7 +309,7 @@ function mapView(){
   app.replaceChildren(v);
   v.querySelectorAll(".bld").forEach(g=>{
     const open=()=>{const i=+g.dataset.i,p=PLACES[i];
-      if(stateOf(p)==="locked"){toast(`Locked. Finish ${PLACES[i-1].ko} first to unlock ${p.ko}.`);S.track("locked_tap",p.code);return;}
+      if(stateOf(p)==="locked"){toast(`Locked. Finish ${PLACES[i-1].ko} (${PLACES[i-1].en}) first to unlock ${p.ko} (${p.en}).`);S.track("locked_tap",p.code);return;}
       pi=i;S.track(stateOf(p)==="done"?"place_replay":"place_start",p.code);go(p.kind==="basics"?"units":"intro");};
     g.addEventListener("click",open);g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});
   });
@@ -373,7 +374,7 @@ function showBubbleStatic(m){
 function talk(ko){const npc=document.querySelector("#npc .ch");speak(ko);if(npc){npc.classList.add("talking");setTimeout(()=>npc.classList.remove("talking"),Math.max(900,ko.length*120));}}
 function react(kind){const npc=document.querySelector("#npc .ch");if(!npc||reduced)return;npc.classList.remove("happy","confused");void npc.offsetWidth;npc.classList.add(kind);}
 function sceneShell(p,inner){
-  return el(`<div class="col"><div class="topbar"><button class="back" id="back">← Map</button><span class="where">${p.ko} · ${p.sub}</span></div>${stage(p)}${inner}</div>`);
+  return el(`<div class="col"><div class="topbar"><button class="back" id="back">← Map</button><span class="where">${p.ko} (${p.en}) · ${p.sub}</span></div>${stage(p)}${inner}</div>`);
 }
 function wireBack(){document.getElementById("back").onclick=()=>{
   if(view==="practice"&&line<PLACES[pi].script.length)S.track("place_quit",PLACES[pi].code,"line "+line);go("map");};}
@@ -613,7 +614,7 @@ function reviewResult(){
   const p=PLACES[pi], need=Math.ceil(RQ.length*0.7), pass=rscore>=need;
   S.track("quiz_done",p.code,`${rscore}/${RQ.length}:${pass?"pass":"fail"}`);
   let next=null;
-  if(pass){const fresh=stateOf(p)!=="done";setState(p,"done");next=unlockNext(p);save();if(fresh&&next)setTimeout(()=>toast(`${p.ko} cleared! ${next.ko} is now unlocked.`),400);}
+  if(pass){const fresh=stateOf(p)!=="done";setState(p,"done");next=unlockNext(p);save();if(fresh&&next)setTimeout(()=>toast(`${p.ko} cleared! ${next.ko} (${next.en}) is now unlocked.`),400);}
   const v=sceneShell(p,`<div class="ticket ${pass?"stamped":""}"><div class="stub"><span>REVIEW QUIZ · ${p.ko}</span><span>${pass?"PASSED":"TRY AGAIN"}</span></div>
     <div class="body"><h2>${rscore} / ${RQ.length} correct</h2>
     <p>${pass?"Great memory. Now try it in real life.":`You need ${need} to pass. Questions you missed come back more often.`}</p>
@@ -661,7 +662,7 @@ const decompose=ch=>{const c=ch.charCodeAt(0)-0xAC00;return {L:LJ[Math.floor(c/5
 function finishBasics(how){
   const fresh=stateOf(BASICS)!=="done";setState(BASICS,"done");const next=unlockNext(BASICS);save();
   S.track("basics_done",BASICS.code,how);
-  if(fresh&&next)setTimeout(()=>toast(`${BASICS.ko} cleared! ${next.ko} is now unlocked.`),300);
+  if(fresh&&next)setTimeout(()=>toast(`${BASICS.ko} cleared! ${next.ko} (${next.en}) is now unlocked.`),300);
 }
 function unitsView(){
   const p=BASICS, U=p.units, ud=unitsDone();
