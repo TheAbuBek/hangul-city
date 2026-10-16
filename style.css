@@ -246,3 +246,62 @@ button{font:inherit;color:inherit}
 #chk{display:block;width:100%}
 
 .hud-title{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+
+/* new scenes */
+.s-bank .backdrop{background:linear-gradient(#E4EBF3 0 66%,#C7D3E2 66%)}
+.s-bank .backdrop::before{content:"번호 023";position:absolute;right:14px;top:14px;background:#14233A;color:#FF6B5A;font-family:var(--f-mono);font-size:16px;padding:6px 12px;border-radius:4px}
+.s-bank .counter{background:#2D4F7C}
+.s-phone .backdrop{background:repeating-linear-gradient(90deg,#F4F4F6 0 40px,#E8E9ED 40px 80px)}
+.s-phone .backdrop::before{content:"5G 무제한 · 선불 유심";position:absolute;left:14px;top:14px;background:#23272E;color:#fff;font-weight:700;font-size:12px;padding:6px 10px;border-radius:6px;font-family:var(--f-body)}
+.s-phone .counter{background:#D9DBE0}
+.s-realestate .backdrop{background:linear-gradient(#F3EAD9 0 70%,#D8C7A6 70%)}
+.s-realestate .backdrop::before{content:"원룸 500/50\A 투룸 1000/70";white-space:pre;position:absolute;right:14px;top:14px;background:#fff;color:#4A3D30;border:2px solid #B5462F;font-weight:700;font-size:12px;line-height:1.6;padding:6px 10px;font-family:var(--f-body)}
+.s-realestate .counter{background:#7A5A3C}
+.s-market .backdrop{background:linear-gradient(#CFE3EC 0 60%,#9FC9DA 60%)}
+.s-market .backdrop::before{content:"광어 · 우럭 · 전복";position:absolute;left:14px;top:14px;background:#1E3F52;color:#fff;font-weight:700;font-size:12px;padding:6px 10px;border-radius:6px;font-family:var(--f-body)}
+.s-market .counter{background:#5F8FA5}
+.s-jjimjil .backdrop{background:linear-gradient(#FBEFF1 0 70%,#E9C9A8 70%)}
+.s-jjimjil .counter{background:#B98A6A}
+.s-taxi .backdrop{background:linear-gradient(#9FC8EA 0 50%,#6E7680 50%)}
+.s-taxi .backdrop::before{content:"";position:absolute;inset:0;border:14px solid #E8A33A;border-radius:16px}
+.s-taxi .counter{background:#2E2E33}
+
+/* ===== Hangul City additions ===== */
+.en-title{font-family:var(--f-body);font-weight:700;font-size:.5em;color:var(--muted);letter-spacing:.02em}
+.cities{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.cities::-webkit-scrollbar{display:none}
+.city{all:unset;cursor:pointer;flex:none;display:flex;flex-direction:column;align-items:center;min-width:62px;padding:7px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:15px;line-height:1.2}
+.city small{font-weight:400;font-size:11px;color:var(--muted)}
+.city.on{background:var(--navy);color:var(--navy-ink);border-color:var(--navy)}
+.city.on small{color:var(--navy-ink);opacity:.8}
+.city.soon{opacity:.5;border-style:dashed}
+.city:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.compete{display:block;width:100%;background:var(--navy);color:var(--navy-ink)}
+.photo{margin:0;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.photo img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;max-width:100%}
+.photo figcaption{font-size:12px;color:var(--muted);padding:6px 10px}
+.photo.small{border-radius:10px}.photo.small img{aspect-ratio:16/7}
+.timer{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--accent);transition:width .2s linear}
+.tile small,.opt small{display:block;font-family:var(--f-mono);font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
+.ticket .ro{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.center{text-align:center;align-items:center}
+.roomcode{font-family:var(--f-mono);font-size:56px;font-weight:500;letter-spacing:.18em;color:var(--accent);line-height:1.1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip.mine{background:var(--accent-soft);color:var(--accent)}
+.rooms .chip{border:1px solid var(--line);font-weight:500;font-size:14px;padding:6px 12px}
+.opt.picked{border-color:var(--navy);background:var(--bubble)}
+.bigresult{font-family:var(--f-display);font-size:40px;text-align:center;line-height:1.1}
+.bigresult.ok{color:var(--ok)}.bigresult.no{color:var(--muted)}
+.lb{list-style:none;margin:0;padding:0}
+.lb li{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.lb li:last-child{border-bottom:0}
+.lb li.me{color:var(--accent);font-weight:700}
+.lb .rk{font-family:var(--f-mono);color:var(--muted)}
+.lb .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:8px}
+.pod{flex:1;max-width:120px;display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:12px 12px 0 0;padding:10px 6px 6px;color:#fff;font-size:13px;text-align:center}
+.pod span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod b{font-size:16px}.pod i{font-style:normal;font-family:var(--f-display);font-size:26px}
+.pod.p1{background:var(--gold);min-height:150px}.pod.p2{background:#8E9AA8;min-height:120px}.pod.p3{background:#B07A4E;min-height:100px}
+.act,.opt,.unit,.city,.tile{box-sizing:border-box}

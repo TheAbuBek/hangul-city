@@ -106,5 +106,6 @@ window.BASICS={
  ]
 };
 
-window.PLACES.unshift(window.BASICS);
-window.PLACES.forEach((p,i)=>p.state=i===0?"open":"locked");
+// 한글 학교 is the first stop in every city, with one shared progress.
+window.CITIES.filter(c=>!c.soon).forEach(c=>c.places.unshift(window.BASICS));
+window.BASICS.photo="";

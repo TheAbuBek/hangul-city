@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Team Stats · Sejong Survival Korean</title>
+<title>Team Stats · Hangul City</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=10141433">
+<link rel="stylesheet" href="style.css?v=10161006">
 <style>
 .wide{max-width:880px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
@@ -38,41 +38,48 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
 </head>
 <body>
 <div class="app wide" id="app">
-  <div class="top"><div><h1>Team stats</h1><p>Sejong Survival Korean · usage data for PBL Module 2</p></div>
+  <div class="top"><div><h1>Team stats</h1><p>Hangul City · usage data for PBL Module 2</p></div>
     <a class="back" href="index.html">← App</a></div>
   <div id="status" class="note info">Loading…</div>
   <div id="out" hidden></div>
 </div>
-<script src="config.js?v=10141433"></script>
-<script src="data.js?v=10141433"></script>
-<script src="basics.js?v=10141433"></script>
+<script src="config.js?v=10161006"></script>
+<script src="data.js?v=10161006"></script>
+<script src="basics.js?v=10161006"></script>
 <script>
-const PL=window.PLACES.map(p=>p.code);
-const NAMES=Object.fromEntries(window.PLACES.map(p=>[p.code,p.ko]));
-const KIND_LABEL={formal:"Too formal",casual:"Too casual (반말)",rude:"Rude / blunt",meaning:"Wrong meaning",word_order:"Word order",wrong_word:"Wrong word"};
+const ALLP=[];window.CITIES.filter(c=>!c.soon).forEach(c=>c.places.forEach(p=>{if(!ALLP.find(x=>x.code===p.code))ALLP.push({code:p.code,ko:p.ko,city:c.ko});}));
+const PL=ALLP.map(p=>p.code), NAMES=Object.fromEntries(ALLP.map(p=>[p.code,p.ko]));
+const KIND_LABEL={formal:"Too formal",casual:"Too casual (반말)",rude:"Rude / blunt",meaning:"Wrong meaning",word_order:"Word order",wrong_word:"Wrong word",timeout:"Ran out of time"};
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pj=s=>{try{return JSON.parse(s);}catch(e){return {};}};
 
 function demoRows(){
   // Clearly fake data so the team can see what the dashboard will look like.
   const rows=[],countries=["Vietnam","China","Uzbekistan","Germany","Mexico","Mongolia","Kazakhstan","France","Indonesia","USA"];
-  const lv=["none","beginner","beginner","intermediate"],mo=["<1","1-6","1-6","6-12"];
+  const lv=["none","beginner","beginner","intermediate","advanced"],mo=["<1","1-6","1-6","6-12"],roles=["student","student","student","worker","other"],homes=["seoul","seoul","busan","incheon","seoul"];
+  const seoul=window.CITIES[0].places.map(p=>p.code);
   const start=Date.now()-20*864e5;
-  for(let u=0;u<28;u++){
-    const uid="demo"+u,nick="Demo"+(u+1),c=countries[u%countries.length],l=lv[u%4],m=mo[(u*3)%4];
+  for(let u=0;u<30;u++){
+    const uid="demo"+u,nick="Demo"+(u+1),c=countries[u%countries.length],l=lv[u%5],m=mo[(u*3)%4];
     const days=1+Math.floor(Math.random()*9),reach=Math.random();
     let t=start+Math.random()*6*864e5;
-    const push=(event,place="",detail="")=>rows.push({time:new Date(t+=6e4).toISOString(),user:uid,nickname:nick,event,place,detail,country:c,level:l,months:m});
-    push("signup","",c);
+    const push=(event,place="",detail="")=>rows.push({time:new Date(t+=6e4).toISOString(),user:uid,nickname:nick,event,place,detail:String(detail),country:c,level:l,months:m});
+    push("signup","",JSON.stringify({country:c,role:roles[u%5],home:homes[u%5]}));
+    const score=Math.max(0,Math.min(8,{none:1,beginner:3,intermediate:5,advanced:7}[l]+Math.round(Math.random()*3-1.5)));
+    if(Math.random()<.2)push("placement_skip","","beginner");else push("placement","",`${score}/8:${score>=7?"advanced":score>=4?"intermediate":"beginner"}`);
     for(let d=0;d<days;d++){
       t+=864e5*(0.6+Math.random()*1.8);push("session_start");
-      const pi=Math.min(4,Math.floor(d*reach*1.2));const code=PL[pi];
+      const i=Math.min(seoul.length-1,1+Math.floor(d*reach*1.3));const code=seoul[i];
       push("place_start",code);
       const errs=Math.floor(Math.random()*4);
       for(let e=0;e<errs;e++)push("answer_wrong",code,["formal","formal","casual","meaning","word_order","rude"][Math.floor(Math.random()*6)]);
       if(Math.random()<.85){push("practice_done",code,errs);
-        if(Math.random()<.55)push("mission_done",code,["yes","yes","partly","partly","no"][Math.floor(Math.random()*5)]);else push("mission_later",code);}
+        let sc=0;for(let q=0;q<8;q++){const cur=q<4||i<2;const from=cur?code:seoul[1+Math.floor(Math.random()*Math.max(1,i-1))];const ok=Math.random()<(cur?.85:.65);sc+=ok;push("quiz_answer",code,`${from}:${ok?1:0}:meaning`);}
+        push("quiz_done",code,`${sc}/8:${sc>=6?"pass":"fail"}`);
+        if(sc>=6&&Math.random()<.55)push("mission_done",code,["yes","yes","partly","partly","no"][Math.floor(Math.random()*5)]);else push("mission_later",code);}
       else push("place_quit",code);
     }
+    if(u%3===0){push("room_join","","1234");for(let q=0;q<10;q++)push("room_answer","",`1234:${Math.random()<.7?1:0}:meaning`);push("room_end","",`1234:${1+u%6}/6:${Math.round(Math.random()*8000)}`);}
   }
   return rows;
 }
@@ -108,71 +115,90 @@ function draw(rows,isDemo){
   {const seen=new Set();rows=rows.filter(r=>{const k=r.user+"|"+r.time+"|"+r.event+"|"+r.detail;if(seen.has(k))return false;seen.add(k);return true;});}
   const out=document.getElementById("out");out.hidden=false;
   const users=new Map();
-  rows.forEach(r=>{if(!users.has(r.user))users.set(r.user,{days:new Set(),country:r.country,level:r.level,months:r.months,missions:0});
-    const u=users.get(r.user);u.days.add(String(r.time).slice(0,10));if(r.event==="mission_done")u.missions++;
-    if(r.country)u.country=r.country;if(r.level)u.level=r.level;if(r.months)u.months=r.months;});
-  const nUsers=users.size;
-  const avgDays=nUsers?[...users.values()].reduce((a,u)=>a+u.days.size,0)/nUsers:0;
-  const returning=[...users.values()].filter(u=>u.days.size>=2).length;
-  const missions=rows.filter(r=>r.event==="mission_done");
-  const success=missions.length?missions.filter(r=>r.detail==="yes").length/missions.length:0;
+  rows.forEach(r=>{if(!users.has(r.user))users.set(r.user,{days:new Set(),level:r.level,missions:0,tested:"",role:"",home:""});
+    const u=users.get(r.user);u.days.add(String(r.time).slice(0,10));if(r.event==="mission_done")u.missions++;if(r.level)u.level=r.level;
+    if(r.event==="signup"){const j=pj(r.detail);u.role=j.role||u.role;u.home=j.home||u.home;}
+    if(r.event==="placement")u.tested=String(r.detail).split(":")[1]||"";
+    if(r.event==="placement_skip")u.tested=u.tested||"beginner (skipped)";
+    if(r.event==="placement_override")u.tested=String(r.detail).split("->")[1]+" (chose)";});
+  const U=[...users.values()], nUsers=U.length;
+  const avgDays=nUsers?U.reduce((a,u)=>a+u.days.size,0)/nUsers:0;
+  const returning=U.filter(u=>u.days.size>=2).length;
+  const missions=rows.filter(r=>r.event==="mission_done"&&!/away/.test(r.detail));
+  const success=missions.length?missions.filter(r=>r.detail.startsWith("yes")).length/missions.length:0;
 
-  // daily active users
   const byDay=new Map();rows.forEach(r=>{const d=String(r.time).slice(0,10);if(!byDay.has(d))byDay.set(d,new Set());byDay.get(d).add(r.user);});
-  const days=[...byDay.keys()].sort();
-  const dau=days.map(d=>byDay.get(d).size);const maxDau=Math.max(1,...dau);
+  const days=[...byDay.keys()].sort(), dau=days.map(d=>byDay.get(d).size), maxDau=Math.max(1,...dau);
 
-  // funnel per place
-  const cnt=(ev,code)=>new Set(rows.filter(r=>r.event===ev&&r.place===code).map(r=>r.user)).size;
-  const funnel=PL.map(c=>({c,start:cnt("place_start",c),prac:cnt("practice_done",c),mis:cnt("mission_done",c)}));
+  const cnt=(ev,code,test)=>new Set(rows.filter(r=>r.event===ev&&r.place===code&&(!test||test(r))).map(r=>r.user)).size;
+  const funnel=PL.filter(c=>c!=="한글").map(c=>({c,start:cnt("place_start",c),pass:cnt("quiz_done",c,r=>/pass/.test(r.detail)),mis:cnt("mission_done",c)})).filter(f=>f.start>0);
   const maxF=Math.max(1,...funnel.map(f=>f.start));
 
-  // mistakes
   const kinds={};rows.filter(r=>r.event==="answer_wrong").forEach(r=>kinds[r.detail]=(kinds[r.detail]||0)+1);
-  const kindItems=Object.entries(kinds).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[KIND_LABEL[k]||k,v]);
-  const maxK=Math.max(1,...kindItems.map(k=>k[1]));
+  const kindItems=Object.entries(kinds).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[KIND_LABEL[k]||k,v]), maxK=Math.max(1,...kindItems.map(k=>k[1]));
 
-  // mission results
-  const res={yes:0,partly:0,no:0};missions.forEach(r=>res[r.detail]=(res[r.detail]||0)+1);
-  const tot=missions.length||1;
+  const res={yes:0,partly:0,no:0};missions.forEach(r=>{const k=r.detail.split(":")[0];res[k]=(res[k]||0)+1;});const tot=missions.length||1;
 
-  // by level
-  const lv={};users.forEach(u=>{const k=u.level||"?";lv[k]=lv[k]||{n:0,days:0,mis:0};lv[k].n++;lv[k].days+=u.days.size;lv[k].mis+=u.missions;});
+  // retention: review-quiz accuracy on the place just learned vs earlier places
+  const qa=rows.filter(r=>r.event==="quiz_answer").map(r=>{const [from,ok]=String(r.detail).split(":");return {cur:from===r.place,ok:ok==="1"};});
+  const acc=a=>a.length?Math.round(100*a.filter(x=>x.ok).length/a.length):0;
+  const qCur=qa.filter(x=>x.cur), qOld=qa.filter(x=>!x.cur);
+  const qd=rows.filter(r=>r.event==="quiz_done"), qPass=qd.filter(r=>/pass/.test(r.detail)).length;
 
-  const navy=css("--navy"),ok=css("--ok"),acc=css("--accent"),mut=css("--muted");
+  // self-rated vs tested
+  const SELF=["none","beginner","intermediate","advanced"], TEST=["beginner","beginner (skipped)","intermediate","advanced"];
+  const cross={};U.forEach(u=>{const k=(u.level||"?")+"|"+(u.tested.replace(" (chose)","")||"not tested");cross[k]=(cross[k]||0)+1;});
+  const testCols=[...TEST,"not tested"];
+
+  const roles={},homes={};U.forEach(u=>{roles[u.role||"unknown"]=(roles[u.role||"unknown"]||0)+1;homes[u.home||"unknown"]=(homes[u.home||"unknown"]||0)+1;});
+  const ra=rows.filter(r=>r.event==="room_answer"), roomGames=new Set(rows.filter(r=>r.event==="room_start"||r.event==="room_end").map(r=>String(r.detail).split(":")[0])).size;
+  const roomPlayers=new Set(rows.filter(r=>r.event==="room_join"||r.event==="room_host").map(r=>r.user)).size;
+
+  const navy=css("--navy"),ok=css("--ok"),accC=css("--accent"),mut=css("--muted");
   out.innerHTML=`
   ${isDemo?`<div class="demo">DEMO DATA. Randomly generated to preview the dashboard. Not real users.</div>`:""}
   <div class="kpis">
-    <div class="kpi"><b>${nUsers}</b><span>students signed up</span></div>
-    <div class="kpi"><b>${avgDays.toFixed(1)}</b><span>avg. days active per student</span></div>
+    <div class="kpi"><b>${nUsers}</b><span>users signed up</span></div>
+    <div class="kpi"><b>${avgDays.toFixed(1)}</b><span>avg. days active per user</span></div>
     <div class="kpi"><b>${nUsers?Math.round(100*returning/nUsers):0}%</b><span>came back on 2+ days</span></div>
+    <div class="kpi"><b>${qd.length?Math.round(100*qPass/qd.length):0}%</b><span>review quizzes passed (n = ${qd.length})</span></div>
     <div class="kpi"><b>${missions.length}</b><span>real-life missions done</span></div>
     <div class="kpi"><b>${Math.round(100*success)}%</b><span>missions understood first try</span></div>
   </div>
-  <div class="panel"><h2>Daily active students</h2><p class="sub">Unique students who opened the app each day</p>
+  <div class="panel"><h2>Daily active users</h2><p class="sub">Unique users who opened the app each day</p>
     <div class="cols">${dau.map(v=>`<div style="height:${100*v/maxDau}%"><span>${v}</span></div>`).join("")}</div>
     <div class="colx">${days.map((d,i)=>`<span>${i%Math.ceil(days.length/8)===0?d.slice(5):""}</span>`).join("")}</div></div>
   <div class="grid2">
-    <div class="panel"><h2>How far students get</h2><p class="sub">Students per place: started → finished practice → did the real mission</p>
-      <div class="legend"><span><i style="background:${navy}"></i>Started</span><span><i style="background:${mut}"></i>Practice done</span><span><i style="background:${ok}"></i>Mission done</span></div>
-      <div class="bars">${funnel.map(f=>`<div class="bar"><span>${f.c} ${NAMES[f.c]}</span><div class="track" style="flex-direction:column;height:24px;gap:1px;background:none">
-        <div class="fill" style="height:8px;width:${100*f.start/maxF}%;background:${navy};border-radius:2px"></div>
-        <div class="fill" style="height:7px;width:${100*f.prac/maxF}%;background:${mut};border-radius:2px"></div>
-        <div class="fill" style="height:7px;width:${100*f.mis/maxF}%;background:${ok};border-radius:2px"></div></div><span class="v">${f.start}/${f.prac}/${f.mis}</span></div>`).join("")}</div></div>
-    <div class="panel"><h2>What students get wrong</h2><p class="sub">Wrong answers by type, all places</p>${bars(kindItems,maxK,acc)}</div>
+    <div class="panel"><h2>Retention</h2><p class="sub">Review-quiz accuracy: the place just learned vs. places learned earlier</p>
+      ${bars([["Just learned",acc(qCur),acc(qCur)+"% (n="+qCur.length+")"],["Learned earlier",acc(qOld),acc(qOld)+"% (n="+qOld.length+")"]],100,ok)}
+      <p class="sub">A small drop is normal forgetting. A big drop means earlier places need more review.</p></div>
+    <div class="panel"><h2>Self-rated vs. tested level</h2><p class="sub">Rows: what users guessed. Columns: placement result.</p>
+      <div class="tw"><table><tr><th>Guessed</th>${testCols.map(t=>`<th>${t}</th>`).join("")}</tr>
+      ${SELF.map(sv=>`<tr><td>${sv}</td>${testCols.map(t=>`<td>${cross[sv+"|"+t]||""}</td>`).join("")}</tr>`).join("")}</table></div></div>
   </div>
   <div class="grid2">
-    <div class="panel"><h2>Did Koreans understand them?</h2><p class="sub">Self-report after each real-life mission (n = ${missions.length})</p>
-      ${bars([["Yes, first try",res.yes,Math.round(100*res.yes/tot)+"%"],["Mostly",res.partly,Math.round(100*res.partly/tot)+"%"],["Switched to English",res.no,Math.round(100*res.no/tot)+"%"]],Math.max(res.yes,res.partly,res.no,1),ok)}</div>
-    <div class="panel"><h2>By Korean level</h2><p class="sub">Who uses it most</p><div class="tw"><table><tr><th>Level</th><th>Students</th><th>Avg. days</th><th>Missions / student</th></tr>
-      ${Object.entries(lv).map(([k,v])=>`<tr><td>${k}</td><td>${v.n}</td><td>${(v.days/v.n).toFixed(1)}</td><td>${(v.mis/v.n).toFixed(1)}</td></tr>`).join("")}</table></div></div>
+    <div class="panel"><h2>How far users get</h2><p class="sub">Users per place: started → passed review quiz → did the real mission</p>
+      <div class="legend"><span><i style="background:${navy}"></i>Started</span><span><i style="background:${mut}"></i>Quiz passed</span><span><i style="background:${ok}"></i>Mission done</span></div>
+      <div class="bars">${funnel.map(f=>`<div class="bar"><span>${NAMES[f.c]}</span><div class="track" style="flex-direction:column;height:24px;gap:1px;background:none">
+        <div class="fill" style="height:8px;width:${100*f.start/maxF}%;background:${navy};border-radius:2px"></div>
+        <div class="fill" style="height:7px;width:${100*f.pass/maxF}%;background:${mut};border-radius:2px"></div>
+        <div class="fill" style="height:7px;width:${100*f.mis/maxF}%;background:${ok};border-radius:2px"></div></div><span class="v">${f.start}/${f.pass}/${f.mis}</span></div>`).join("")||`<p class="sub">No places started yet.</p>`}</div></div>
+    <div class="panel"><h2>What users get wrong</h2><p class="sub">Wrong answers in practice, by type</p>${bars(kindItems,maxK,accC)}</div>
   </div>
+  <div class="grid2">
+    <div class="panel"><h2>Did Koreans understand them?</h2><p class="sub">Self-report after real-life missions in the user's own city (n = ${missions.length})</p>
+      ${bars([["Yes, first try",res.yes,Math.round(100*res.yes/tot)+"%"],["Mostly",res.partly,Math.round(100*res.partly/tot)+"%"],["Switched to English",res.no,Math.round(100*res.no/tot)+"%"]],Math.max(res.yes,res.partly,res.no,1),ok)}</div>
+    <div class="panel"><h2>Who uses it</h2><p class="sub">From sign-up</p>
+      <div class="tw"><table><tr><th>Role</th><th>Users</th></tr>${Object.entries(roles).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</table></div>
+      <div class="tw"><table><tr><th>Lives in</th><th>Users</th></tr>${Object.entries(homes).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</table></div></div>
+  </div>
+  <div class="panel"><h2>Competition rooms</h2><p class="sub">${roomGames} game${roomGames===1?"":"s"} · ${roomPlayers} different players · ${acc(ra.map(r=>({ok:String(r.detail).split(":")[1]==="1"})))}% answers correct in games</p></div>
   <div class="row"><button class="act alt" id="csv">Download all events (CSV)</button></div>`;
   document.getElementById("csv").onclick=()=>{
     const H=["time","user","nickname","event","place","detail","country","level","months"];
     const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
     const csv=[H.join(","),...rows.map(r=>H.map(h=>q(r[h])).join(","))].join("\n");
-    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv"}));a.download=isDemo?"ssk-demo-events.csv":"ssk-events.csv";a.click();
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv"}));a.download=isDemo?"hangul-city-demo-events.csv":"hangul-city-events.csv";a.click();
   };
 }
 load();

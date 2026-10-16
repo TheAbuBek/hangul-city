@@ -11,7 +11,7 @@
     return id;
   }
   let queue=store.get("ssk_queue",[]);
-  let sending=false;
+  let sending=false, backoff=1500;
   async function flush(){
     const url=window.SSK_ENDPOINT;
     if(!url||sending||!queue.length) return;
@@ -21,9 +21,10 @@
     queue=queue.slice(batch.length);store.set("ssk_queue",queue);
     try{
       await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({rows:batch})});
-    }catch(e){queue=batch.concat(queue);store.set("ssk_queue",queue);/* offline: try again next time */}
+      backoff=1500;
+    }catch(e){queue=batch.concat(queue);store.set("ssk_queue",queue);backoff=Math.min(backoff*2,60000);/* offline: try again later */}
     sending=false;
-    if(queue.length) setTimeout(flush,1500);
+    if(queue.length) setTimeout(flush,backoff);
   }
   window.SSK={
     store, uid,

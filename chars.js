@@ -10,7 +10,7 @@ const ACC={
   vest:(t)=>`<path d="M48 240 Q50 182 84 170 L94 240Z M152 240 Q150 182 116 170 L106 240Z" fill="rgba(0,0,0,.18)"/><rect x="116" y="196" width="22" height="12" rx="3" fill="#fff" opacity=".9"/>`,
   apron:()=>`<path d="M70 178 L130 178 L136 240 L64 240Z" fill="#F4EDE2"/><path d="M78 178 Q100 160 122 178" stroke="#F4EDE2" stroke-width="5" fill="none"/>`,
   scarf:()=>`<path d="M84 160 L116 160 L108 182 L100 172 L92 182Z" fill="#E7B04B"/>`,
-  lanyard:()=>``, cap:()=>``, glasses:()=>``, nursecap:()=>``
+  lanyard:()=>`<path d="M86 168 L100 206 L114 168" stroke="#E7B04B" stroke-width="3" fill="none"/><rect x="91" y="204" width="18" height="24" rx="3" fill="#fff"/><rect x="94" y="208" width="12" height="6" fill="#3E7CC9"/>`, cap:()=>``, glasses:()=>``, nursecap:()=>``
 };
 function head(s){
   let extra="";
@@ -73,5 +73,36 @@ B.school=`<rect x="-54" y="-24" width="108" height="64" fill="#F5EBDD" stroke="#
     <g fill="#BFE0EF" stroke="#3B3346" stroke-width="1.5"><rect x="-44" y="8" width="20" height="16"/><rect x="24" y="8" width="20" height="16"/></g>
     <rect x="-10" y="10" width="20" height="30" fill="#8A5A3A" stroke="#3B3346" stroke-width="2"/>
     <rect x="-1" y="-74" width="2" height="22" fill="#3B3346"/><path d="M1 -74 h16 l-4 5 l4 5 h-16z" fill="#C0473A"/>`;
+B.bank=`<rect x="-50" y="-26" width="100" height="66" fill="#E9EEF4" stroke="#24364F" stroke-width="2.5"/>
+    <rect x="-56" y="-38" width="112" height="14" fill="#2D4F7C"/><text x="0" y="-27" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">은행 BANK</text>
+    <g fill="#B9CFE6" stroke="#24364F" stroke-width="1.5"><rect x="-42" y="-14" width="22" height="20"/><rect x="20" y="-14" width="22" height="20"/></g>
+    <rect x="-12" y="4" width="24" height="36" fill="#8FC6DE" stroke="#24364F" stroke-width="2"/><text x="-31" y="30" text-anchor="middle" font-size="14" font-weight="700" fill="#2D4F7C">₩</text>`;
+B.phone=`<rect x="-46" y="-28" width="92" height="68" rx="4" fill="#F4F4F6" stroke="#23272E" stroke-width="2.5"/>
+    <rect x="-52" y="-40" width="104" height="14" rx="3" fill="#23272E"/><text x="0" y="-29" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">휴대폰 · 유심</text>
+    <rect x="-38" y="-16" width="44" height="40" fill="#CFE6F7" stroke="#23272E" stroke-width="2"/>
+    <rect x="-28" y="-10" width="12" height="22" rx="2" fill="#23272E"/><rect x="-12" y="-8" width="12" height="20" rx="2" fill="#3E7CC9"/>
+    <rect x="14" y="0" width="24" height="40" fill="#8FC6DE" stroke="#23272E" stroke-width="2"/>`;
+B.realestate=`<rect x="-44" y="-22" width="88" height="62" fill="#F3EAD9" stroke="#4A3D30" stroke-width="2.5"/>
+    <rect x="-50" y="-36" width="100" height="16" rx="3" fill="#B5462F"/><text x="0" y="-24" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">부동산</text>
+    <rect x="-36" y="-12" width="44" height="34" fill="#FFFFFF" stroke="#4A3D30" stroke-width="1.5"/>
+    <g fill="#E3D6BE"><rect x="-32" y="-8" width="10" height="7"/><rect x="-19" y="-8" width="10" height="7"/><rect x="-6" y="-8" width="10" height="7"/><rect x="-32" y="3" width="10" height="7"/><rect x="-19" y="3" width="10" height="7"/></g>
+    <rect x="14" y="4" width="22" height="36" fill="#7A5A3C" stroke="#4A3D30" stroke-width="2"/>`;
+B.market=`<path d="M-62 -12 L-50 -38 L50 -38 L62 -12Z" fill="#2F6E8F" stroke="#1E3F52" stroke-width="2.5"/>
+    <g fill="#fff" opacity=".85"><path d="M-46 -36 L-40 -14 L-30 -14 L-34 -36Z"/><path d="M-14 -36 L-12 -14 L-2 -14 L-4 -36Z"/><path d="M18 -36 L20 -14 L30 -14 L26 -36Z"/></g>
+    <rect x="-56" y="-12" width="112" height="52" fill="#EAF2F5" stroke="#1E3F52" stroke-width="2.5"/>
+    <rect x="-50" y="10" width="100" height="16" rx="3" fill="#9FC9DA" stroke="#1E3F52" stroke-width="1.5"/>
+    <g fill="#E58A5C" stroke="#1E3F52" stroke-width="1"><ellipse cx="-30" cy="18" rx="12" ry="5"/><ellipse cx="0" cy="18" rx="12" ry="5"/><ellipse cx="30" cy="18" rx="12" ry="5"/></g>
+    <text x="0" y="0" text-anchor="middle" font-size="11" font-weight="700" fill="#1E3F52">자갈치</text>`;
+B.jjimjil=`<rect x="-50" y="-30" width="100" height="70" fill="#FBEFF1" stroke="#7A3446" stroke-width="2.5"/>
+    <path d="M-56 -30 Q0 -58 56 -30Z" fill="#D97A8A" stroke="#7A3446" stroke-width="2.5"/>
+    <g stroke="#D97A8A" stroke-width="3" fill="none" stroke-linecap="round"><path d="M-10 -66 q4 6 0 12 q-4 6 0 12"/><path d="M0 -70 q4 6 0 12 q-4 6 0 12"/><path d="M10 -66 q4 6 0 12 q-4 6 0 12"/></g>
+    <text x="0" y="-8" text-anchor="middle" font-size="11" font-weight="700" fill="#7A3446">찜질방</text>
+    <rect x="-12" y="6" width="24" height="34" fill="#8A5A3A" stroke="#7A3446" stroke-width="2"/>
+    <g fill="#F7D9DE" stroke="#7A3446" stroke-width="1.5"><rect x="-42" y="6" width="20" height="16"/><rect x="22" y="6" width="20" height="16"/></g>`;
+B.taxi=`<path d="M-58 20 L-52 -2 Q-48 -14 -34 -16 L30 -16 Q44 -14 50 -2 L58 20 L58 32 L-58 32Z" fill="#E8A33A" stroke="#5A3E14" stroke-width="2.5"/>
+    <path d="M-40 -2 L-32 -12 L-4 -12 L-4 -2Z M4 -2 L4 -12 L28 -12 L38 -2Z" fill="#CFE6F7" stroke="#5A3E14" stroke-width="1.5"/>
+    <rect x="-14" y="-30" width="28" height="12" rx="3" fill="#FFF3D6" stroke="#5A3E14" stroke-width="1.5"/><text x="0" y="-21" text-anchor="middle" font-size="8" font-weight="700" fill="#5A3E14">TAXI</text>
+    <circle cx="-34" cy="34" r="9" fill="#2A2A2A"/><circle cx="34" cy="34" r="9" fill="#2A2A2A"/>
+    <text x="0" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#5A3E14">부산</text>`;
 window.buildingSVG=t=>B[t]||B.store;
 })();
