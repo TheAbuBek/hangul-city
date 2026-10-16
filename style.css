@@ -316,3 +316,8 @@ button{font:inherit;color:inherit}
 .likert button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .likert-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
 .field textarea{font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;box-sizing:border-box;resize:vertical}
+.fb{display:flex;flex-direction:column;gap:6px;line-height:1.45}
+.fb-tip{display:block;color:var(--ink)}
+.revq{border-top:1px solid var(--line);padding:8px 0}
+.revq p{margin:4px 0}
+.opt[disabled]{opacity:.55;cursor:default}

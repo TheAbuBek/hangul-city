@@ -165,16 +165,24 @@ function placement(){
     </div></div>`);
   app.replaceChildren(v);
   if(q.listen){setTimeout(()=>speak(q.listen),400);document.getElementById("play").onclick=()=>speak(q.listen);}
-  const next=ok=>{if(ok)pscore++;S.track(testMode==="post"?"posttest_q":"placement_q","",q.k+":"+(ok?1:0));pq++;if(pq>=porder.length)(testMode==="post"?finishPost():finishPlacement());else render();};
-  v.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>next(+b.dataset.i===0));
-  document.getElementById("idk").onclick=()=>next(false);
+  const next=(ok,chosen)=>{q.chosen=chosen;q.ok=ok;if(ok)pscore++;S.track(testMode==="post"?"posttest_q":"placement_q","",q.k+":"+(ok?1:0));pq++;if(pq>=porder.length)(testMode==="post"?finishPost():finishPlacement());else render();};
+  v.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>next(+b.dataset.i===0,q.options[+b.dataset.i]));
+  document.getElementById("idk").onclick=()=>next(false,null);
   document.getElementById("quit").onclick=()=>{if(testMode==="post"){S.track("posttest_later","","at "+pq);postSnooze=true;go("map");return;}S.track("placement_skip","","quit at "+pq);applyLevel("beginner",null);go("map");};
+}
+function mistakesReview(){
+  const miss=porder.filter(q=>!q.ok);
+  if(!miss.length)return `<p class="small">No mistakes. Great job!</p>`;
+  return `<details class="history"><summary>Review your mistakes (${miss.length})</summary><div class="hist">${miss.map(q=>`<div class="revq">
+    <p><b>${q.listen?`(audio) ${q.listen}`:q.prompt}</b><br><span class="small">${q.q}</span></p>
+    <p>Your answer: ${q.chosen?esc(q.chosen):"I don't know"}<br>Correct: <b>${q.options[0]}</b>${/[가-힣]/.test(q.options[0])?` <span class="small">(${rom(q.options[0])})</span>`:""}</p>
+    <p class="small">${q.k==="num"?"Sino numbers (일, 이, 삼) for money and floors; native numbers (하나, 둘, 셋) for people and hours.":q.k==="polite"?"With staff, short polite -요 forms sound natural. Textbook forms sound stiff, and 반말 sounds rude.":q.k==="read"?"Read block by block; many words come from English.":q.k==="listen"?"Listen for the first word of the sentence.":"Some everyday phrases don't translate word for word."}</p></div>`).join("")}</div></details>`;
 }
 function finishPlacement(){
   const lvl=pscore>=7?"advanced":pscore>=4?"intermediate":"beginner";
   const txt={beginner:"You'll start at 한글 학교 with romanization and translations shown.",intermediate:"You can read Korean, so 한글 학교 is skipped. Translations are hidden until you tap.",advanced:"The first three Seoul places are open, there are no hints, and your answers are timed."}[lvl];
   const v=el(`<div class="col"><div class="hero"><p class="label">Your result</p><h1>${pscore}/8 · ${LEVEL[lvl].name}</h1><p>${txt}</p></div>
-    <div class="panel"><button class="act" id="ok">Go to the map</button>
+    <div class="panel">${mistakesReview()}<button class="act" id="ok">Go to the map</button>
     <p class="small">Feels wrong? Pick your level yourself:</p>${seg("lv",[["beginner","Beginner"],["intermediate","Intermediate"],["advanced","Advanced"]])}</div></div>`);
   app.replaceChildren(v);
   S.track("placement","",`${pscore}/8:${lvl}:${preForm()}`);
@@ -207,7 +215,7 @@ function finishPost(){
       <h1>${pscore}/8</h1>
       <p>${pre==null?"You skipped the first level check, so there's nothing to compare with. Thanks, this still helps.":diff>0?`Up ${diff} from your first check (${pre}/8). Your practice is working.`:diff===0?`Same as your first check (${pre}/8). Keep going, the review quizzes help most.`:`Your first check was ${pre}/8. A different set of questions can be harder, keep practising.`}</p>
       <div class="hero-chars"><div>${charSVG(BASICS.char)}</div></div></div>
-    <div class="panel"><button class="act" id="ok">Back to the map</button></div></div>`);
+    <div class="panel">${mistakesReview()}<button class="act" id="ok">Back to the map</button></div></div>`);
   app.replaceChildren(v);document.getElementById("ok").onclick=()=>go("map");
 }
 // ---------- feedback survey ----------
@@ -403,6 +411,17 @@ function learn(){
   document.getElementById("next").onclick=()=>{if(last){S.track("lesson_done",p.code);startPractice();}else{lessonI++;render();}};
 }
 
+// ---------- feedback on mistakes ----------
+const KIND_TIP={
+  formal:"Use the short everyday form. A simple -요 ending is polite enough with staff.",
+  casual:"That's 반말. With staff and strangers, use the polite -요 form.",
+  rude:"Choose the softer option. Korean avoids blunt refusals and commands.",
+  meaning:"Re-read what they asked, then pick the reply that answers it."
+};
+function fbNote(why,tip){return el(`<div class="note bad fb"><b>Why it's wrong:</b> ${why}${tip?`<span class="fb-tip"><b>How to fix it:</b> ${tip}</span>`:""}</div>`);}
+let LOOK=null;
+function lookup(){if(LOOK)return LOOK;const byEn={},byKo={};window.HC_ITEMS().forEach(x=>{if(x.ko&&x.en){byEn[x.en]=x;byKo[x.ko]=x;}});return LOOK={byEn,byKo};}
+
 // ---------- practice ----------
 function startPractice(){line=0;picked=[];bank=[];mistakes=0;log=[];missionStage="ticket";go("practice");}
 const myLine=m=>m.type==="build"?m.answer.join(" "):m.type==="pick"?m.options[m.answer]:m.ko;
@@ -445,6 +464,7 @@ function startTimer(turn){
   },200);
 }
 function buildTurn(c){
+  let tries=0;
   const extra=cfg().opts<3?c.extra.slice(0,1):c.extra;
   if(!bank.length) bank=shuffle([...c.answer,...extra]);
   const n=el(`<div class="turn"><p class="hint">Your turn · ${c.en}</p><div class="slot" id="slot"></div><div class="bank" id="bk"></div><div id="nt"></div><button class="act" id="send">Say it</button></div>`);
@@ -458,20 +478,34 @@ function buildTurn(c){
   n.querySelector("#send").onclick=()=>{
     const got=picked.map(i=>bank[i]);
     if(got.join(" ")===c.answer.join(" ")){S.track("answer_right",PLACES[pi].code,"build");speak(c.answer.join(" "));advanceMe(c);}
-    else{mistakes++;const kind=got.some(w=>c.extra.includes(w))?"wrong_word":"word_order";
+    else{mistakes++;tries++;const ans=c.answer;
+      const extraW=got.find(w=>!ans.includes(w));
+      const k=got.findIndex((w,j)=>w!==ans[j]);
+      let kind,why,tip;
+      if(extraW){kind="wrong_word";why=`“${extraW}” isn't part of this sentence.`;tip="Tap it to take it back, then build the sentence from the other words.";}
+      else if(k===-1){kind="incomplete";why="Good start, but the sentence isn't finished.";tip=`Add the ${ans.length-got.length===1?"last word":`remaining ${ans.length-got.length} words`}.`;}
+      else{kind="word_order";why=k===0?`A sentence like this doesn't start with “${got[0]}”.`:`It's right up to “${ans.slice(0,k).join(" ")}”, then the order changes.`;
+        tip="Korean puts the action at the end (주세요, 가요?, 있어요). Tap words to take them back and reorder.";}
+      if(tries>=2){const nx=ans[k===-1?got.length:Math.max(0,extraW?got.indexOf(extraW):k)];tip+=` Hint: the next word should be “${nx}”.`;}
       S.track("answer_wrong",PLACES[pi].code,kind);react("confused");n.querySelector("#slot").classList.add("bad");
-      n.querySelector("#nt").replaceChildren(el(`<div class="note bad">${kind==="word_order"?"Right words, wrong order. In Korean the verb comes last.":"One of those words doesn't belong here."} Tap a word to take it back.</div>`));}
+      n.querySelector("#nt").replaceChildren(fbNote(why,tip));}
   };
   return n;
 }
 function pickTurn(c){
+  let tries=0;
   const n=el(`<div class="turn"><p class="hint">Your turn · ${c.en}</p><div class="opts" id="op"></div><div id="nt"></div></div>`);
   let idx=c.options.map((o,i)=>i);
   if(cfg().opts<idx.length){const wrongs=shuffle(idx.filter(i=>i!==c.answer)).slice(0,cfg().opts-1);idx=[c.answer,...wrongs];}
   shuffle(idx).forEach(i=>{const o=c.options[i];const b=el(`<button class="opt">${o}${cfg().rom?`<small>${rom(o)}</small>`:""}</button>`);b.onclick=()=>{
     if(i===c.answer){S.track("answer_right",PLACES[pi].code,"pick");speak(o);advanceMe(c);}
-    else{mistakes++;S.track("answer_wrong",PLACES[pi].code,(c.kinds&&c.kinds[i])||"meaning");react("confused");
-      b.classList.add("wrong");n.querySelector("#nt").replaceChildren(el(`<div class="note bad">${(c.notes&&c.notes[i])||"That doesn't fit here. Try another."}</div>`));}
+    else{mistakes++;tries++;const kind=(c.kinds&&c.kinds[i])||"meaning";S.track("answer_wrong",PLACES[pi].code,kind);react("confused");
+      const asked=[...PLACES[pi].script.slice(0,line)].reverse().find(m=>m.who==="them");
+      let why=(c.notes&&c.notes[i])||"That doesn't answer what they said.";
+      let tip=KIND_TIP[kind]||KIND_TIP.meaning;
+      if(kind==="meaning"&&asked&&!cfg().noTranslate)tip=`They said “${asked.ko}” (${asked.en}). ${tip}`;
+      if(tries>=2){const right=c.options[c.answer];tip+=` Hint: the answer starts with “${right.split(" ")[0]}”.`;}
+      b.classList.add("wrong");b.disabled=true;n.querySelector("#nt").replaceChildren(fbNote(why,tip));}
   };n.querySelector("#op").appendChild(b);});
   return n;
 }
@@ -503,7 +537,7 @@ function itemsOf(p){
   (p.lesson||[]).forEach((L,i)=>{if(!/○○/.test(L.ko+L.en))out.push({id:`${p.code}:L${i}`,place:p.code,ko:L.ko,en:L.en});});
   (p.script||[]).forEach((m,i)=>{
     if(m.who==="them"&&!/\(Busan/.test(m.en))out.push({id:`${p.code}:T${i}`,place:p.code,ko:m.ko,en:m.en});
-    if(m.type==="pick")out.push({id:`${p.code}:P${i}`,place:p.code,en:m.en,options:m.options,answer:m.answer,notes:m.notes});
+    if(m.type==="pick")out.push({id:`${p.code}:P${i}`,place:p.code,en:m.en,options:m.options,answer:m.answer,notes:m.notes,kinds:m.kinds});
   });
   return out;
 }
@@ -512,7 +546,7 @@ function makeQuestion(item,pool,nopts){
   if(item.options){
     let idx=item.options.map((_,i)=>i);
     if(nopts<idx.length)idx=[item.answer,...shuffle(idx.filter(i=>i!==item.answer)).slice(0,nopts-1)];
-    return {item,qtype:"polite",prompt:item.en,ask:"Which is the natural thing to say?",options:shuffle(idx).map(i=>({t:item.options[i],ok:i===item.answer,note:item.notes&&item.notes[i]}))};
+    return {item,qtype:"polite",prompt:item.en,ask:"Which is the natural thing to say?",options:shuffle(idx).map(i=>({t:item.options[i],ok:i===item.answer,note:item.notes&&item.notes[i],kind:(item.kinds&&item.kinds[i])||"meaning"}))};
   }
   const types=["meaning","listen","say"];const qtype=types[Math.floor(Math.random()*3)];
   const field=qtype==="say"?"ko":"en";
@@ -561,7 +595,16 @@ function review(){
       if(ok){rscore++;react("happy");if(/[가-힣]/.test(o.t))speak(o.t);}
       else{b.classList.add("wrong");react("confused");}
       const nt=document.getElementById("nt");
-      nt.replaceChildren(el(`<div class="note ${ok?"info":"bad"}">${ok?"Correct!":(o.note||"Not this one. The right answer is highlighted. It'll come back in a later quiz.")}</div>`));
+      if(ok)nt.replaceChildren(el(`<div class="note info">Correct!</div>`));
+      else{
+        const L=lookup(), it=q.item, rightT=q.options.find(x=>x.ok).t;
+        let why,tip;
+        if(q.qtype==="polite"){why=o.note||"That doesn't fit this situation.";tip=`${KIND_TIP[o.kind]||KIND_TIP.meaning} The natural answer is “${rightT}”.`;}
+        else if(q.qtype==="say"){const m=L.byKo[o.t];why=m?`“${o.t}” means “${m.en}”.`:`“${o.t}” says something else.`;tip=`For “${it.en}”, say “${it.ko}”${cfg().rom?` (${rom(it.ko)})`:""}.`;}
+        else{const m=L.byEn[o.t];why=m?`“${o.t}” is the meaning of “${m.ko}”, a different sentence.`:"That's a different meaning.";
+          tip=q.qtype==="listen"?`You heard “${it.ko}”, which means “${it.en}”. Play it again and listen for the first word, “${it.ko.split(" ")[0]}”.`:`“${it.ko}” means “${it.en}”.`;}
+        nt.replaceChildren(fbNote(why,tip+" This one will come back in a later quiz."));
+      }
       const nb=el(`<button class="act" style="display:block;width:100%;margin-top:8px">${rqi===RQ.length-1?"See result":"Next"}</button>`);nb.onclick=()=>{rqi++;render();};nt.appendChild(nb);
     };
     document.getElementById("op").appendChild(b);});
@@ -671,13 +714,26 @@ function unitView(){
   const right=()=>{S.track("basics_right",p.code,u.id);react("happy");
     setTimeout(()=>{uq++;built={L:null,V:null};if(uq>=u.quiz.length){uphase="done";if(!P.units.includes(u.id))P.units.push(u.id);save();S.track("unit_done",p.code,u.id+":"+umiss);
       if(P.units.length>=p.units.length&&stateOf(p)!=="done")finishBasics("completed");}render();},reduced?0:600);};
-  const wrong=msg=>{umiss++;S.track("basics_wrong",p.code,u.id);react("confused");nt.replaceChildren(el(`<div class="note bad">${msg}</div>`));};
+  const wrong=(why,tip)=>{umiss++;S.track("basics_wrong",p.code,u.id);react("confused");nt.replaceChildren(fbNote(why,tip));};
+  // letter <-> sound map from this unit's teaching cards (e.g. "ㅋ ㅌ ㅍ ㅊ" / "k t p ch")
+  const SND={};p.units.forEach(un=>un.cards.forEach(cd=>{const a=cd.big.split(" "),b=cd.sound.split(/\s*\/\s*|\s+/);
+    if(/^[ㄱ-ㅣ]( [ㄱ-ㅣ])*$/.test(cd.big)){if(a.length===1)SND[a[0]]={sound:cd.sound,note:cd.note};else if(a.length===b.length)a.forEach((x,k)=>SND[x]={sound:b[k],note:cd.note});}}));
+  const soundOf=x=>SND[x]&&SND[x].sound, letterOf=snd=>Object.keys(SND).find(k=>SND[k].sound===snd);
+  function explain(i){
+    const o=q.options[i], r=q.options[q.answer];
+    if(q.notes&&q.notes[i])return [q.notes[i],u.id==="numbers"?"Sino numbers (일, 이, 삼) for money, floors, minutes. Native numbers (하나, 둘, 셋) for people, things, hours.":"Think about the situation, then try again."];
+    if(SND[q.prompt]&&letterOf(o))return [`“${o}” is the sound of ${letterOf(o)}, not ${q.prompt}.`,`${q.prompt} sounds “${soundOf(q.prompt)}”. ${SND[q.prompt].note}`];
+    if(SND[o])return [`${o} makes the “${soundOf(o)}” sound.`,SND[r]?`The answer is ${r}: ${SND[r].note}`:"Play it again and compare."];
+    if(/[가-힣]/.test(q.prompt)&&!/[가-힣]/.test(o))return [`“${q.prompt}” reads “${rom(q.prompt)}”, not “${o}”.`,"Read it out loud, one block at a time. Many words are borrowed from English."];
+    if(q.speak&&/[가-힣]/.test(o))return [`“${o}” reads “${rom(o)}”. The word you heard is different.`,`Play it again. It sounds like “${rom(q.speak)}”.`];
+    return ["That's not the one.","Look at the teaching cards again, then try another option."];
+  }
   if(q.type==="pick"){
     box.innerHTML=`${q.speak?`<p class="hint">${q.prompt}</p><button class="act alt" id="play" style="display:block">▶ Play again</button>`:`<p class="hint">${/[가-힣ㄱ-ㅣ0-9]/.test(q.prompt)&&q.prompt.length<12?"What is this?":"Which one fits?"}</p><div class="${q.prompt.length<12?"bigglyph":"qtext"}">${q.prompt}</div>`}<div class="opts grid2opts" id="op"></div>`;
     say(q.speak?"잘 들어 보세요.":"이거 뭐예요?",q.speak?"Listen carefully.":"What's this?");
     if(q.speak){setTimeout(()=>speak(q.speak),900);document.getElementById("play").onclick=()=>speak(q.speak);}
     shuffle(q.options.map((o,i)=>i)).forEach(i=>{const b=el(`<button class="opt">${q.options[i]}</button>`);
-      b.onclick=()=>{if(i===q.answer){b.classList.add("right");if(/[가-힣]/.test(q.options[i]))speak(q.options[i]);right();}else{b.classList.add("wrong");wrong("Not quite. Try another.");}};
+      b.onclick=()=>{if(i===q.answer){b.classList.add("right");if(/[가-힣]/.test(q.options[i]))speak(q.options[i]);right();}else{b.classList.add("wrong");b.disabled=true;const [w,t]=explain(i);wrong(w,t);}};
       document.getElementById("op").appendChild(b);});
   }else{
     const t=decompose(q.target), Ls=["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅎ"], Vs=["ㅏ","ㅓ","ㅗ","ㅜ","ㅡ","ㅣ"];
@@ -691,7 +747,9 @@ function unitView(){
       box.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{built.V=b.dataset.v;draw();if(built.L)speak(compose(built.L,built.V));});
       document.getElementById("chk").onclick=()=>{
         if(built.L===t.L&&built.V===t.V){speak(q.target);right();}
-        else wrong(built.L!==t.L?"Check the consonant. Listen to the sound again.":"Close! The vowel is off.");
+        else{const made=compose(built.L,built.V), tr=rom(q.target), mr=rom(made);
+          if(built.L!==t.L)wrong(`You built ${made} (“${mr}”). The first sound is off.`,`“${tr}” starts with “${tr.replace(/[aeiouwy].*$/,"")||"no consonant sound"}”, so pick ${t.L}${t.L==="ㅇ"?" (silent at the start)":""}.`);
+          else wrong(`You built ${made} (“${mr}”). The consonant is right, but the vowel is off.`,`“${tr}” ends with “${tr.slice(rom(compose(t.L,"ㅏ")).length-1)}”. Try ${t.V}.`);}
       };
     };
     say("만들어 보세요!","Build it!");draw();

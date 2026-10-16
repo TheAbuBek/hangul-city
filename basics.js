@@ -79,12 +79,12 @@ window.BASICS={
     {big:"한 개 · 두 명 · 세 시",say:"한 개, 두 명, 세 시",sound:"han gae · du myeong · se si",note:"Before a counter, 하나 → 한, 둘 → 두, 셋 → 세, 넷 → 네.",ex:"두 명이요 (two people)"},
     {big:"공일공",say:"공일공",sound:"gong-il-gong",note:"Phone numbers: 0 is 공. Korean mobile numbers start with 010.",ex:"공일공… (010…)"}],
    quiz:[
-    {type:"pick",prompt:"3,000원",options:["삼천 원","셋천 원","삼백 원","세 천 원"],answer:0},
-    {type:"pick",prompt:"10,000원",options:["만 원","일만 원","십천 원","열 천 원"],answer:0},
-    {type:"pick",prompt:"Two people (at a restaurant)",options:["두 명이요","이 명이요","둘 명이요","두 개요"],answer:0},
-    {type:"pick",prompt:"5th floor",options:["오 층","다섯 층","오 개","다섯 시"],answer:0},
-    {type:"pick",prompt:"3 o'clock",options:["세 시","삼 시","셋 시","삼 분"],answer:0},
-    {type:"pick",prompt:"Which price do you hear?",speak:"오천 원",options:["5,000원","500원","50,000원","4,000원"],answer:0}]},
+    {type:"pick",prompt:"3,000원",options:["삼천 원","셋천 원","삼백 원","세 천 원"],answer:0,notes:{1:"셋 is a native number. Money uses Sino numbers: 삼.",2:"삼백 is 300. 천 = 1,000, so 3,000 is 삼천.",3:"세 is native. Prices always use Sino numbers: 삼천 원."}},
+    {type:"pick",prompt:"10,000원",options:["만 원","일만 원","십천 원","열 천 원"],answer:0,notes:{1:"Possible on paper, but nobody says it. 10,000 is just 만.",2:"Korean counts big numbers in 만 (10,000), so it's 만 원.",3:"열 is native, and Korean groups by 만: 만 원."}},
+    {type:"pick",prompt:"Two people (at a restaurant)",options:["두 명이요","이 명이요","둘 명이요","두 개요"],answer:0,notes:{1:"People are counted with native numbers: 두 명.",2:"Before a counter word, 둘 shortens to 두.",3:"개 counts things, not people. People use 명."}},
+    {type:"pick",prompt:"5th floor",options:["오 층","다섯 층","오 개","다섯 시"],answer:0,notes:{1:"Floors use Sino numbers: 오 층.",2:"개 counts things. Floors use 층.",3:"시 means o'clock. Floors use 층."}},
+    {type:"pick",prompt:"3 o'clock",options:["세 시","삼 시","셋 시","삼 분"],answer:0,notes:{1:"Hours use native numbers: 세 시.",2:"Before 시, 셋 shortens to 세.",3:"분 means minutes. 3 o'clock is 세 시."}},
+    {type:"pick",prompt:"Which price do you hear?",speak:"오천 원",options:["5,000원","500원","50,000원","4,000원"],answer:0,notes:{1:"500 is 오백. You heard 천 (1,000).",2:"50,000 is 오만. You heard 천 (1,000), not 만.",3:"4 is 사 (사천). You heard 오, which is 5."}}]},
 
   {id:"phrases",ko:"기본 표현",en:"Survival phrases",
    intro:"이거 알면 어디든 갈 수 있어요!",introEn:"Know these and you can go anywhere!",
@@ -98,11 +98,11 @@ window.BASICS={
     {big:"한국어 잘 못해요",say:"한국어 잘 못해요",sound:"hangugeo jal motaeyo",note:"I don't speak Korean well. People will slow down or switch to simple words.",ex:""},
     {big:"죄송합니다 · 잠깐만요",say:"죄송합니다, 잠깐만요",sound:"joesonghamnida · jamkkanmanyo",note:"Sorry · Just a moment (also: 'excuse me, let me pass' on the subway).",ex:""}],
    quiz:[
-    {type:"pick",prompt:"You want to get a staff member's attention.",options:["저기요!","안녕히 가세요","잘 먹었습니다","괜찮아요"],answer:0},
-    {type:"pick",prompt:"You want to know the price.",options:["이거 얼마예요?","이거 뭐예요?","어디예요?","몇 시예요?"],answer:0},
-    {type:"pick",prompt:"Someone speaks too fast.",options:["한국어 잘 못해요","감사합니다","네, 맞아요","잠깐만요"],answer:0},
-    {type:"pick",prompt:"You need to squeeze past people on the subway.",options:["잠깐만요","저기요","얼마예요?","안녕하세요"],answer:0},
-    {type:"pick",prompt:"Which phrase do you hear?",speak:"감사합니다",options:["감사합니다","죄송합니다","안녕하세요","괜찮습니다"],answer:0}]}
+    {type:"pick",prompt:"You want to get a staff member's attention.",options:["저기요!","안녕히 가세요","잘 먹었습니다","괜찮아요"],answer:0,notes:{1:"That's 'goodbye' to someone who is leaving.",2:"You say that after eating, not to call someone.",3:"That means 'it's okay' or 'no thanks'."}},
+    {type:"pick",prompt:"You want to know the price.",options:["이거 얼마예요?","이거 뭐예요?","어디예요?","몇 시예요?"],answer:0,notes:{1:"That asks 'what is this?'",2:"That asks 'where is it?'",3:"That asks 'what time is it?'"}},
+    {type:"pick",prompt:"Someone speaks too fast.",options:["한국어 잘 못해요","감사합니다","네, 맞아요","잠깐만요"],answer:0,notes:{1:"That means 'thank you'.",2:"That means 'yes, that's right'. They'll keep talking fast!",3:"'Just a moment' is close, but it doesn't tell them you need simpler Korean."}},
+    {type:"pick",prompt:"You need to squeeze past people on the subway.",options:["잠깐만요","저기요","얼마예요?","안녕하세요"],answer:0,notes:{1:"저기요 calls someone over. To get past, say 잠깐만요.",2:"That asks a price.",3:"That's a greeting, not 'excuse me'."}},
+    {type:"pick",prompt:"Which phrase do you hear?",speak:"감사합니다",options:["감사합니다","죄송합니다","안녕하세요","괜찮습니다"],answer:0,notes:{1:"죄송합니다 means 'I'm sorry'. Listen for 감사 at the start.",2:"안녕하세요 means 'hello'.",3:"괜찮습니다 means 'it's fine'."}}]}
  ]
 };
 
