@@ -413,6 +413,7 @@ function mapView(){
   if(q("retest"))q("retest").onclick=()=>{S.track("placement_retake");go("placeIntro");};
   if(q("resetno"))q("resetno").onclick=()=>{armReset=false;render();};
   if(q("resetyes"))q("resetyes").onclick=()=>{armReset=false;P={st:{},missions:[],units:[],wrong:{}};applyLevel(LV(),profile.testScore);S.track("reset");render();toast("Progress reset.");window.scrollTo({top:0});};
+  setTimeout(maybeInstall,1200);
   if(cur>0){const target=v.querySelectorAll(".bld")[cur];setTimeout(()=>{try{target.scrollIntoView({block:"center",behavior:reduced?"auto":"smooth"});}catch(e){}},60);}
 }
 
@@ -1011,6 +1012,38 @@ function rooms(){
     questions:n=>{const pool=window.HC_ITEMS();const sel=shuffle(pool.filter(x=>CITIES.find(c=>c.id===cityId).places.some(p=>p.code===x.place))).slice(0,n);
       return sel.map(it=>{const q=makeQuestion(it,pool,4);return {prompt:q.listen||q.prompt,ask:q.ask,listen:!!q.listen,qtype:q.qtype,options:q.options.map(o=>o.t),answer:q.options.findIndex(o=>o.ok)};});},
     back:()=>go("map")});
+}
+
+// ---------- install as an app ----------
+let installEvt=null;
+const standalone=()=>(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+const isIOS=(/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1))&&/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS|EdgiOS|KAKAOTALK|Instagram|FBAN|FBAV|Line\//.test(navigator.userAgent); // Safari only: in-app browsers can't add to home screen
+try{if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;if(view==="map")setTimeout(maybeInstall,800);});
+window.addEventListener("appinstalled",()=>{S.track("app_installed");installEvt=null;document.getElementById("inst")?.remove();});
+function maybeInstall(){
+  if(!profile||standalone()||view!=="map"||document.getElementById("inst"))return;
+  const ask=store.get("hc_install_ask",{n:0,t:0});
+  if(ask.n>=2||(ask.n===1&&Date.now()-ask.t<3*864e5))return;           // ask at most twice, 3 days apart
+  if(stateOf(BASICS)!=="done"&&clearedCount()<1)return;                 // only after they've finished something
+  if(!installEvt&&!isIOS)return;
+  store.set("hc_install_ask",{n:ask.n+1,t:Date.now()});S.track("install_prompt",isIOS?"ios":"android",ask.n+1);
+  const ios=!installEvt;
+  const sh=el(`<div class="sheet-bg" id="inst"><div class="sheet" role="dialog" aria-label="Install Hangul City">
+    <img src="img/icon-192.png" alt="" width="64" height="64">
+    <h2>Install Hangul City</h2>
+    <p>Open it from your home screen like an app: full screen, one tap, your progress stays.</p>
+    ${ios?`<ol class="ios-steps"><li>Tap <b>Share</b> <span class="ios-ico">⬆︎</span> at the bottom of Safari</li><li>Choose <b>Add to Home Screen</b></li><li>Tap <b>Add</b></li></ol>`:""}
+    <div class="row">${ios?`<button class="act" id="instok">Got it</button>`:`<button class="act" id="instyes">Install</button><button class="act alt" id="instno">Not now</button>`}</div>
+  </div></div>`);
+  document.body.appendChild(sh);
+  const close=how=>{S.track("install_choice","",how);sh.remove();};
+  sh.addEventListener("click",e=>{if(e.target===sh)close("outside");});
+  const q=id=>document.getElementById(id);
+  if(q("instok"))q("instok").onclick=()=>close("ios_ok");
+  if(q("instno"))q("instno").onclick=()=>close("later");
+  if(q("instyes"))q("instyes").onclick=async()=>{const ev=installEvt;installEvt=null;sh.remove();
+    try{ev.prompt();const r=await ev.userChoice;S.track("install_choice","",r.outcome);if(r.outcome==="accepted")toast("Installed! Find Hangul City on your home screen.");}catch(e){}};
 }
 
 function go(v){view=v;render();window.scrollTo({top:0});}
