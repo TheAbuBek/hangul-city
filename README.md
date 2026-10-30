@@ -13,6 +13,7 @@ Built for **영어와컴퓨터 (Autumn 2026)**: PBL Module 1 (app) and Module 2 
 | `basics.js` | 한글 학교: alphabet, reading, numbers, survival phrases |
 | `rooms.js` | Live competition rooms (needs Firebase) |
 | `chars.js` | Drawn characters and buildings |
+| `img/` | Logo, mascot and app icons |
 | `photos/` | Real photos, one per place (file names are in `data.js`, e.g. `photos/convenience.jpg`) |
 | `track.js` | Records usage events |
 | `config.js` | Where you paste the data-collection URL |
@@ -55,3 +56,7 @@ Open `data.js`. Each place has a `script`: lines with `who:"them"` are what the 
 Paste the Firebase web config into `config.js` as `window.HC_FIREBASE = { apiKey: "...", databaseURL: "...", ... };`.
 Database rules used: `{ "rules": { "rooms": { "$code": { ".read": true, ".write": true, ".validate": "$code.length === 4" } } } }`.
 To test rooms on one computer without Firebase, open the site with `?localrooms&as=Name` in several tabs.
+
+## How a city works
+
+Places unlock one by one. After every 2 places there is a **review station** (복습 정류장) on the map: 8 questions on those two places plus a few earlier ones; pass 6 to unlock the next place. Each cleared place adds its **word cards** (`words` in `data.js`) to the 단어 카드 game. From the 3rd place on, learners also say each built sentence out loud, and the final lines get longer as they progress.

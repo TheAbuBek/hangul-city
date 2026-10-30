@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=10170211">
+<link rel="stylesheet" href="style.css?v=10301120">
 <style>
 .wide{max-width:880px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
@@ -43,9 +43,9 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
   <div id="status" class="note info">Loading…</div>
   <div id="out" hidden></div>
 </div>
-<script src="config.js?v=10170211"></script>
-<script src="data.js?v=10170211"></script>
-<script src="basics.js?v=10170211"></script>
+<script src="config.js?v=10301120"></script>
+<script src="data.js?v=10301120"></script>
+<script src="basics.js?v=10301120"></script>
 <script>
 const ALLP=[];window.CITIES.filter(c=>!c.soon).forEach(c=>c.places.forEach(p=>{if(!ALLP.find(x=>x.code===p.code))ALLP.push({code:p.code,ko:p.ko,city:c.ko});}));
 const PL=ALLP.map(p=>p.code), NAMES=Object.fromEntries(ALLP.map(p=>[p.code,p.ko]));
@@ -101,12 +101,23 @@ async function load(){
     document.getElementById("kf").onsubmit=ev=>{ev.preventDefault();try{localStorage.setItem("ssk_team_key",document.getElementById("k").value.trim());}catch(e){}load();};
     return;
   }
+  const fail=(msg)=>{st.className="note bad";st.innerHTML=msg+`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="act alt" id="chg" style="padding:8px 12px">Change password</button><button class="act alt" id="rt" style="padding:8px 12px">Try again</button></div>`;
+    document.getElementById("chg").onclick=()=>{try{localStorage.removeItem("ssk_team_key");}catch(e){}st.className="note info";load();};
+    document.getElementById("rt").onclick=()=>{st.className="note info";st.textContent="Loading…";load();};};
+  let text="";
   try{
-    const r=await fetch(url+"?key="+encodeURIComponent(key));const j=await r.json();
-    if(j.error==="key"){try{localStorage.removeItem("ssk_team_key");}catch(e){}st.className="note bad";st.textContent="Wrong team password. Reload the page and try again.";return;}
+    const r=await fetch(url+"?key="+encodeURIComponent(key));text=await r.text();
+    let j;try{j=JSON.parse(text);}catch(e){
+      const m=text.match(/Script function not found: (\w+)/);
+      fail(m?`The deployed Apps Script has no <code>${m[1]}</code>. In Apps Script: <b>Deploy → Manage deployments → ✏️ → Version: New version → Deploy</b>.`
+        :/accounts\.google\.com|ServiceLogin|sign in/i.test(text)?`Google asked for a sign-in. Set the deployment's <b>Who has access</b> to <b>Anyone</b>.`
+        :`The Apps Script answered with an error page instead of data. Open the Apps Script, check <b>Executions</b> for the error, then deploy a new version.`);
+      return;}
+    if(j.error==="key"){try{localStorage.removeItem("ssk_team_key");}catch(e){}fail("Wrong team password. It must match <code>TEAM_KEY</code> in your Apps Script.");return;}
+    if(j.error){fail("Apps Script error: "+String(j.error).replace(/[<>&]/g,""));return;}
     st.hidden=true;draw(j.rows||[],false);
   }catch(e){
-    st.className="note bad";st.textContent="Couldn't load data from the Google Sheet. Check that the Apps Script is deployed with access set to “Anyone”.";
+    fail("Couldn't reach the Google Sheet (network or blocked request). Check your internet, then make sure the deployment's <b>Who has access</b> is <b>Anyone</b>.");
   }
 }
 

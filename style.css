@@ -150,7 +150,8 @@ button{font:inherit;color:inherit}
 .where{font-size:12px;color:var(--muted);text-align:right;min-width:0}
 
 /* stage */
-.stage{position:relative;height:330px;border-radius:18px;overflow:hidden;border:2px solid var(--line);isolation:isolate}
+.scene{display:flex;flex-direction:column}
+.stage{position:relative;height:250px;border-radius:18px;overflow:hidden;border:2px solid var(--line);isolation:isolate}
 .backdrop{position:absolute;inset:0;z-index:-1}
 .s-store .backdrop{background:
   linear-gradient(#C9CFC4,#C9CFC4) 0 70px/100% 5px no-repeat,
@@ -170,16 +171,17 @@ button{font:inherit;color:inherit}
 .s-hospital .backdrop::before{content:"접수 · 수납";position:absolute;left:16px;top:16px;background:#2E9C8F;color:#fff;font-weight:700;font-size:13px;padding:6px 12px;border-radius:6px;font-family:var(--f-body)}
 .s-airport .backdrop{background:linear-gradient(#BFD9F2 0 40%,#EAF1F8 40%);}
 .s-airport .backdrop::before{content:"Arrivals · 도착";position:absolute;right:14px;top:14px;background:#1F2E46;color:#F2C14E;font-family:var(--f-mono);font-size:12px;padding:6px 10px;border-radius:4px}
-.npc{position:absolute;left:50%;bottom:58px;width:170px;transform:translateX(-62%)}
+.npc{position:absolute;left:50%;bottom:50px;width:150px;transform:translateX(-50%)}
 .counter{position:absolute;left:0;right:0;bottom:0;height:72px;background:var(--stage-floor);border-top:4px solid rgba(0,0,0,.12)}
 .s-store .counter{background:#7C8C80}.s-restaurant .counter{background:#8A5A3A}.s-office .counter{background:#B8C4D6}
 .s-bus .counter{background:#3A3F47}.s-hospital .counter{background:#F7FBFB}.s-airport .counter{background:#2F4A7A}
 .nametag{position:absolute;left:12px;bottom:12px;background:var(--surface);color:var(--ink);border-radius:10px;padding:5px 10px;font-weight:700;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .nametag small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
-.bubble-npc{position:absolute;right:10px;top:12px;max-width:min(64%,250px);background:var(--surface);color:var(--ink);border-radius:16px;padding:10px 12px;box-shadow:0 4px 14px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:4px}
+.bubble-npc{position:relative;margin-top:12px;background:var(--surface);color:var(--ink);border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 4px 14px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:4px;min-height:64px}
 .bubble-npc:empty{display:none}
-.bubble-npc::after{content:"";position:absolute;left:-8px;top:30px;border:8px solid transparent;border-right-color:var(--surface);border-left:0}
-.bubble-npc .ko{font-size:18px;font-weight:700;min-height:1.4em}
+.bubble-npc::before{content:"";position:absolute;left:50%;top:-10px;margin-left:-10px;border:10px solid transparent;border-bottom-color:var(--line);border-top:0}
+.bubble-npc::after{content:"";position:absolute;left:50%;top:-8px;margin-left:-9px;border:9px solid transparent;border-bottom-color:var(--surface);border-top:0}
+.bubble-npc .ko{font-size:19px;font-weight:700;min-height:1.4em;word-break:keep-all}
 .bubble-npc .ro{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .bubble-npc .en{font-size:13px;color:var(--muted)}
 
@@ -218,12 +220,11 @@ button{font:inherit;color:inherit}
 .progress i{display:block;height:100%;background:var(--ok);transition:width .3s}
 .sayit{text-align:center}.sayit div{font-size:26px;font-weight:700}.sayit small{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
 #cont{display:block;width:100%}
-@media (max-width:380px){.stage{height:300px}.npc{width:150px}.bubble-npc .ko{font-size:16px}}
+@media (max-width:380px){.stage{height:220px}.npc{width:130px}.bubble-npc .ko{font-size:17px}}
 
 /* 한글 학교 */
 .s-school .backdrop{background:linear-gradient(#EDE6F3 0 68%,#CDBFA8 68%)}
 .s-school .backdrop::before{content:"가 나 다 라 마 바 사";position:absolute;left:14px;top:14px;right:14px;background:#2F4A3A;color:#F4F1E6;font-size:17px;letter-spacing:.3em;padding:10px 12px;border-radius:6px;border:5px solid #8A6A45;font-family:var(--f-body);white-space:nowrap;overflow:hidden}
-.s-school .bubble-npc{top:72px}
 .s-school .counter{background:#8A6A45}
 .units{display:flex;flex-direction:column;gap:8px}
 .unit{all:unset;cursor:pointer;display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
@@ -241,8 +242,6 @@ button{font:inherit;color:inherit}
 .opt.right{border-color:var(--ok);background:var(--ok-soft)}
 .tile.sel{border-color:var(--navy);background:var(--navy);color:var(--navy-ink)}
 .builtg{min-height:68px}
-.s-school .npc{transform:translateX(-100%)}
-.s-school .bubble-npc{max-width:min(56%,230px)}
 #chk{display:block;width:100%}
 
 .hud-title{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
@@ -323,3 +322,42 @@ button{font:inherit;color:inherit}
 .opt[disabled]{opacity:.55;cursor:default}
 
 .sign-en{font-family:var(--f-body);font-size:10.5px;fill:var(--muted)}
+
+/* ===== Oct 30: stations, word cards, city scenery, logo ===== */
+:root{--mtn:#9DBF8A;--mtn-top:#F4F6F2;--hill:#A9CC8F;--water:#8EC5E6;--wave:#FFFFFF;--sand:#F1E2BC;--gull:#5E6670}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--mtn:#3B5A40;--mtn-top:#8C9A90;--hill:#355A3C;--water:#2D5878;--wave:#7FA9C8;--sand:#6B5F45;--gull:#B9C2CC}}
+:root[data-theme="dark"]{--mtn:#3B5A40;--mtn-top:#8C9A90;--hill:#355A3C;--water:#2D5878;--wave:#7FA9C8;--sand:#6B5F45;--gull:#B9C2CC}
+.lm{font-family:var(--f-body);font-size:10px;font-weight:700;fill:var(--ink);opacity:.62}
+.lm-l{fill:#fff;opacity:.9}
+.apt{font-family:var(--f-mono);font-size:6.5px;fill:#6B6255}
+.st-t{font-family:var(--f-body);font-size:13px;font-weight:700;fill:#fff}
+.cityline{margin:-6px 0 0;font-size:12px;color:var(--muted);text-align:center}
+.hud-title{display:flex;align-items:center;gap:6px}
+.hud-face{width:26px;height:auto;flex:none}
+.logo{margin:0}
+.logo img{display:block;width:100%;height:auto;background:#F7F8FB;border-radius:18px;padding:10px 12px}
+.mascot{display:block;width:100%;height:auto}
+.hero-chars .mascot{width:110px;margin:0 auto}
+.npc .mascot{width:80%;margin:0 auto}
+@media (prefers-reduced-motion:no-preference){.npc .mascot.talking{animation:nod .5s ease-in-out infinite}}
+.s-station .backdrop{background:linear-gradient(#CFE6F7 0 64%,#C8C2B4 64%)}
+.s-station .backdrop::before{content:"🚏 복습 정류장 · Review station";position:absolute;left:12px;top:12px;background:var(--accent);color:#fff;font-weight:700;font-size:12px;padding:6px 10px;border-radius:6px;font-family:var(--f-body)}
+.s-station .counter{background:#8B93A1}
+.note.ok{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.note.heads{background:var(--accent-soft);color:var(--ink)}
+.newcards{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--bubble);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--muted)}
+.newcards b{font-size:22px;letter-spacing:.08em}
+.wordsbtn{display:flex;justify-content:center;align-items:center;gap:8px}
+.badge{display:inline-block;min-width:22px;padding:1px 7px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:700}
+.cardgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.wcard{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);text-align:center;min-width:0}
+.wcard .emo{font-size:30px;line-height:1.2}
+.wcard b{font-size:15px}
+.wcard small{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.wcard.off{border-style:dashed;opacity:.55}.wcard.off .emo{color:var(--muted);font-weight:700}
+.flash{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:190px;border-radius:18px;border:2px solid var(--line);background:var(--surface);box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.flash .emo{font-size:96px;line-height:1.1}
+.fhint{font-size:14px;color:var(--muted)}
+.winput{font:inherit;font-size:22px;text-align:center;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px;width:100%;box-sizing:border-box}
+.winput:focus{outline:none;border-color:var(--navy)}
+.turn .seg{justify-content:center}

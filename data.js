@@ -8,10 +8,10 @@ const BASE=[
  {code:"편의점",photo:"photos/convenience.jpg",ko:"편의점",en:"Convenience store",brands:"GS25 · CU · 7-Eleven",
   scene:"store",sub:"After class, 18:40",who:"알바생",whoEn:"part-time clerk",
   char:{skin:"#F2C9A0",hair:"#2B211C",style:"short",top:"#3C8D5A",acc:"vest"},
-  culture:"Clerks rattle off the same fast questions in every store: 봉투? 데워 드려요? 적립? 영수증? Learn this pattern once and you'll understand most shops. Say 수고하세요 when you leave.",
+  culture:"Clerks rattle off the same fast questions in every store: 봉투? 데워 드릴까요? 적립? 영수증? Learn this pattern once and you'll understand most shops. Say 수고하세요 when you leave.",
   lesson:[
    {ko:"봉투 필요하세요?",ro:"bongtu piryohaseyo?",en:"Do you need a bag?",note:"Bags cost money, so they always ask. Answer 네 or 아뇨, 괜찮아요."},
-   {ko:"데워 드려요?",ro:"dewo deuryeoyo?",en:"Shall I heat it up?",note:"For lunch boxes (도시락) and 삼각김밥. Say 네, 데워 주세요."},
+   {ko:"데워 드릴까요?",ro:"dewo deurilkkayo?",en:"Shall I heat it up?",note:"For lunch boxes (도시락) and 삼각김밥. Say 네, 데워 주세요."},
    {ko:"아뇨, 괜찮아요",ro:"anyo, gwaenchanayo",en:"No thanks",note:"The polite way to say no to almost anything. Never 싫어요, which sounds like 'I don't want to.'"},
    {ko:"수고하세요",ro:"sugohaseyo",en:"(Bye,) keep up the good work",note:"What Koreans say leaving a shop. Sounds natural and friendly."}],
   script:[
@@ -19,7 +19,7 @@ const BASE=[
    {who:"them",ko:"봉투 필요하세요?",en:"Need a bag?"},
    {who:"me",type:"pick",en:"No thanks, you'll carry it.",options:["아뇨, 괜찮아요","봉투가 필요하지 않습니다","싫어요"],answer:0,
     notes:{1:"Textbook. Real people just say 아뇨, 괜찮아요.",2:"싫어요 means 'I don't want to,' which sounds blunt here."},kinds:{1:"formal",2:"rude"}},
-   {who:"them",ko:"이거 데워 드려요?",en:"Want this heated?"},
+   {who:"them",ko:"이거 데워 드릴까요?",en:"Want this heated?"},
    {who:"me",type:"build",en:"Yes, heat it please.",answer:["네,","데워","주세요"],extra:["봉투","없어요"]},
    {who:"them",ko:"포인트 적립하세요?",en:"Collecting points?"},
    {who:"me",type:"pick",en:"You don't have a points card.",options:["아뇨, 없어요","네, 데워 주세요","포인트 카드를 소지하고 있지 않습니다"],answer:0,
@@ -27,13 +27,14 @@ const BASE=[
    {who:"them",ko:"영수증 드릴까요?",en:"Receipt?"},
    {who:"me",type:"pick",en:"No receipt.",options:["아뇨, 괜찮아요","네, 카드요","몇 번이요?"],answer:0},
    {who:"them",ko:"감사합니다~",en:"Thank you~"},
-   {who:"me",type:"say",ko:"수고하세요",ro:"sugohaseyo",en:"Leave the way Koreans do."}],
+   {who:"me",type:"say",ko:"감사합니다. 수고하세요!",en:"Thank her and leave the way Koreans do."}],
+  words:[{ko:"봉투",en:"plastic bag",emo:"🛍️"},{ko:"도시락",en:"lunch box",emo:"🍱"},{ko:"삼각김밥",en:"triangle rice ball",emo:"🍙"},{ko:"영수증",en:"receipt",emo:"🧾"},{ko:"컵라면",en:"cup noodles",emo:"🍜"}],
   mission:{title:"Buy something at a GS25, CU or 7-Eleven and get it heated, in Korean.",say:"네, 데워 주세요.",tip:"On your way out: 수고하세요."}},
 
  {code:"식당",photo:"photos/restaurant.jpg",ko:"식당",en:"Korean restaurant",brands:"김치찌개 · 백반집",
   scene:"restaurant",sub:"Lunch near campus, 12:30",who:"이모",whoEn:"restaurant auntie",
   char:{skin:"#EBC19B",hair:"#3A2A24",style:"perm",top:"#C0473A",acc:"apron"},
-  culture:"Staff won't come to your table on their own. Call them with 여기요! or 이모!, which is normal, not rude. Water is often self-service (물은 셀프), and you pay at the counter on the way out. No tipping.",
+  culture:"Staff won't come to your table on their own. Call them with 여기요! or 사장님!, which is normal, not rude. (이모 only fits an older woman, so 사장님 is the safe choice.) Water is often self-service (물은 셀프), and you pay at the counter on the way out. No tipping.",
   lesson:[
    {ko:"여기요!",ro:"yeogiyo!",en:"Excuse me! (calling staff)",note:"Raise your hand and say it loudly. Waiting quietly means nobody comes."},
    {ko:"○○ 두 개 주세요",ro:"du gae juseyo",en:"Two ○○, please",note:"Food + number + 주세요. 한 개, 두 개, 세 개."},
@@ -53,7 +54,8 @@ const BASE=[
     notes:{1:"Textbook. 덜 맵게 해 주세요 is what people actually say.",2:"That asks 'it's not spicy?' and in 반말."},kinds:{1:"formal",2:"casual"}},
    {who:"them",ko:"네~ 물은 셀프예요!",en:"Okay~ Water is self-service!"},
    {who:"them",ko:"맛있게 드셨어요? 이만 원이요.",en:"Did you enjoy it? That's 20,000 won."},
-   {who:"me",type:"say",ko:"잘 먹었습니다",ro:"jal meogeotseumnida",en:"Thank her as you pay."}],
+   {who:"me",type:"say",ko:"잘 먹었습니다. 진짜 맛있었어요!",en:"Thank her as you pay, and say it was really good."}],
+  words:[{ko:"김치찌개",en:"kimchi stew",emo:"🍲"},{ko:"물",en:"water",emo:"💧"},{ko:"숟가락",en:"spoon",emo:"🥄"},{ko:"젓가락",en:"chopsticks",emo:"🥢"},{ko:"밥",en:"rice",emo:"🍚"}],
   mission:{title:"Order at a Korean restaurant and ask for it less spicy.",say:"여기요! 김치찌개 하나 주세요. 덜 맵게 해 주세요.",tip:"Leaving: 잘 먹었습니다."}},
 
  {code:"대학교",photo:"photos/university.jpg",ko:"대학교",en:"University office",brands:"학과 사무실",
@@ -64,7 +66,7 @@ const BASE=[
    {ko:"어떻게 오셨어요?",ro:"eotteoke osyeosseoyo?",en:"How can I help you?",note:"Literally 'how did you come,' but it means 'what do you need.'"},
    {ko:"○○ 떼려고 왔는데요",ro:"ttaeryeogo wanneundeyo",en:"I came to get ○○ (a document)",note:"떼다 is the everyday verb for getting an official document."},
    {ko:"재학증명서",ro:"jaehak jeungmyeongseo",en:"Enrollment certificate",note:"You'll need it for visas, banks and scholarships."},
-   {ko:"아 네, 알겠어요!",ro:"a ne, algesseoyo!",en:"Oh, got it!",note:"Natural reaction. 이해했습니다 sounds like a soldier reporting."}],
+   {ko:"아 네, 알겠습니다!",ro:"a ne, algetseumnida!",en:"Oh, got it!",note:"Polite reaction for school staff. 알겠어요 is fine with classmates. 이해했습니다 sounds like a soldier reporting."}],
   script:[
    {who:"them",ko:"네, 어떻게 오셨어요?",en:"Yes, how can I help you?"},
    {who:"me",type:"build",en:"Say you came to get an enrollment certificate.",answer:["재학증명서","떼려고","왔는데요"],extra:["주세요","어디"]},
@@ -72,10 +74,11 @@ const BASE=[
    {who:"me",type:"pick",en:"Ask where the kiosk is.",options:["발급기 어디 있어요?","발급기의 위치를 알려 주시겠습니까?","발급기 어디야?"],answer:0,
     notes:{1:"Polite, but stiff. Spoken Korean is shorter.",2:"반말. Too casual with office staff."},kinds:{1:"formal",2:"casual"}},
    {who:"them",ko:"학생회관 1층에 있어요. 학생증만 있으면 돼요.",en:"First floor of the Student Center. You just need your student ID."},
-   {who:"me",type:"pick",en:"React naturally: oh, got it.",options:["아 네, 알겠어요!","이해했습니다","오케이"],answer:0,
-    notes:{1:"Sounds like a soldier reporting. 아 네, 알겠어요 is what people say.",2:"Too casual for an office."},kinds:{1:"formal",2:"casual"}},
-   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank her on your way out."}],
-  mission:{title:"Get one thing done at your department office in Korean.",say:"재학증명서 떼려고 왔는데요.",tip:"Pointed elsewhere? 거기 어디 있어요?"}},
+   {who:"me",type:"pick",en:"React naturally: oh, got it.",options:["아 네, 알겠습니다!","이해했습니다","오케이"],answer:0,
+    notes:{1:"Sounds like a soldier reporting. 아 네, 알겠습니다 is what people say to staff.",2:"Too casual for an office."},kinds:{1:"formal",2:"casual"}},
+   {who:"me",type:"say",ko:"학생회관 1층이요? 알겠습니다, 감사합니다!",ro:"haksaenghoegwan il-cheungiyo? algetseumnida, gamsahamnida!",en:"Repeat the place to check you heard it right, then thank her."}],
+  words:[{ko:"학생증",en:"student ID card",emo:"🪪"},{ko:"도서관",en:"library",emo:"📚"},{ko:"책",en:"book",emo:"📖"},{ko:"노트북",en:"laptop",emo:"💻"},{ko:"가방",en:"bag (backpack)",emo:"🎒"}],
+  mission:{title:"Get one thing done at your department office in Korean.",say:"재학증명서 떼려고 왔는데요.",tip:"Pointed elsewhere? 그거 어디 있어요?"}},
 
  {code:"버스",photo:"photos/bus.jpg",ko:"버스 정류장",en:"Bus stop",brands:"시내버스",
   scene:"bus",sub:"Evening, 19:15",who:"기사님",whoEn:"bus driver",
@@ -87,11 +90,12 @@ const BASE=[
    {ko:"몇 정거장 가야 돼요?",ro:"myeot jeonggeojang gaya dwaeyo?",en:"How many stops?",note:"정거장 = stop. Then listen for the announcement."}],
   script:[
    {who:"me",type:"build",en:"Ask the driver if this bus goes to 강남역.",answer:["기사님,","이거","강남역","가요?"],extra:["주세요","몇"]},
-   {who:"them",ko:"가요.",en:"Yep."},
+   {who:"them",ko:"네, 가요.",en:"Yes, it does."},
    {who:"me",type:"pick",en:"Ask how many stops.",options:["몇 정거장 가야 돼요?","몇 층이에요?","정거장이 몇 개 남았습니까?"],answer:0,
     notes:{1:"That asks which floor.",2:"Understandable, but it sounds like a news anchor."},kinds:{1:"meaning",2:"formal"}},
-   {who:"them",ko:"세 정거장. 방송 나오면 내려요.",en:"Three stops. Get off when you hear the announcement."},
-   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank him as you tap your card."}],
+   {who:"them",ko:"세 정거장이요. 방송 나오면 내려요.",en:"Three stops. Get off when you hear the announcement."},
+   {who:"me",type:"say",ko:"네, 감사합니다. 방송 나오면 내릴게요.",en:"Thank him and say you'll get off at the announcement."}],
+  words:[{ko:"버스",en:"bus",emo:"🚌"},{ko:"교통카드",en:"transit card",emo:"💳"},{ko:"정류장",en:"bus stop",emo:"🚏"},{ko:"지하철",en:"subway",emo:"🚇"},{ko:"자전거",en:"bicycle",emo:"🚲"}],
   mission:{title:"Ask a bus driver if the bus goes where you need.",say:"기사님, 이거 강남역 가요?",tip:"Then: 몇 정거장 가야 돼요?"}},
 
  {code:"병원",photo:"photos/hospital.jpg",ko:"병원",en:"Hospital reception",brands:"동네 의원",
@@ -116,7 +120,9 @@ const BASE=[
    {who:"me",type:"pick",en:"No fever.",options:["열은 없어요","열 주세요","발열 증상은 없습니다"],answer:0,
     notes:{1:"That's 'give me a fever.'",2:"Medical-report Korean. Just 열은 없어요."},kinds:{1:"meaning",2:"formal"}},
    {who:"them",ko:"앉아서 기다리세요. 이름 부르면 들어가시면 돼요.",en:"Have a seat. Go in when we call your name."},
-   {who:"me",type:"say",ko:"네, 감사합니다",ro:"ne, gamsahamnida",en:"Answer her."}],
+   {who:"me",type:"say",ko:"네, 감사합니다. 혹시 얼마나 기다려야 돼요?",en:"Thank her and ask how long you'll have to wait."},
+   {who:"them",ko:"한 십 분 정도요. 조금만 기다려 주세요.",en:"About ten minutes. Please wait a little."}],
+  words:[{ko:"약",en:"medicine",emo:"💊"},{ko:"마스크",en:"face mask",emo:"😷"},{ko:"체온계",en:"thermometer",emo:"🌡️"},{ko:"주사",en:"injection",emo:"💉"},{ko:"병원",en:"hospital",emo:"🏥"}],
   mission:{title:"Next time you need a clinic, check in at reception in Korean.",say:"목이 아파서 왔어요. 어제부터요.",tip:"Bring your 외국인등록증."}},
 
  {code:"공항",photo:"photos/airport.jpg",ko:"공항",en:"Airport",brands:"인천공항",
@@ -136,8 +142,11 @@ const BASE=[
    {who:"them",ko:"교통카드 있으면 그냥 찍고 타셔도 돼요.",en:"If you have a transit card, you can just tap and ride."},
    {who:"me",type:"pick",en:"React: oh, I see!",options:["아, 그렇구나! 감사합니다","이해했습니다","ㅇㅋ"],answer:0,
     notes:{1:"Stiff. 아, 그렇구나 sounds natural.",2:"Text slang. Never say it out loud."},kinds:{1:"formal",2:"casual"}},
-   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank her."}],
-  mission:{title:"Ask an airport or station staff member for directions in Korean.",say:"서울역 가는 공항철도 어디서 타요?",tip:"Ticket? 표는 어디서 사요?"}}
+   {who:"me",type:"say",ko:"감사합니다. 그런데 서울역까지 얼마나 걸려요?",en:"Thank her, then ask how long it takes to Seoul Station."},
+   {who:"them",ko:"직통열차는 사십삼 분, 일반열차는 한 시간 정도 걸려요.",en:"The express takes 43 minutes, the regular train about an hour."},
+   {who:"me",type:"say",ko:"아, 그렇구나. 그럼 일반열차 타고 갈게요. 감사합니다!",en:"React, say you'll take the regular train, and thank her."}],
+  words:[{ko:"비행기",en:"airplane",emo:"✈️"},{ko:"여권",en:"passport",emo:"🛂"},{ko:"짐",en:"luggage",emo:"🧳"},{ko:"기차",en:"train",emo:"🚆"},{ko:"택시",en:"taxi",emo:"🚕"}]
+  ,mission:{title:"Ask an airport or station staff member for directions in Korean.",say:"서울역 가는 공항철도 어디서 타요?",tip:"Ticket? 표는 어디서 사요?"}}
 ];
 
 // ---------- Life in Korea: new Seoul places ----------
@@ -153,7 +162,7 @@ const LIFE=[
    {ko:"비밀번호",ro:"bimilbeonho",en:"PIN / password",note:"They'll ask you to type a 4-digit 비밀번호 on a keypad."}],
   script:[
    {who:"them",ko:"번호표 뽑고 잠시만 기다려 주세요~",en:"Please take a number and wait a moment~"},
-   {who:"them",ko:"23번 고객님, 이쪽으로 오세요. 뭐 도와드릴까요?",en:"Customer 23, this way please. How can I help?"},
+   {who:"them",ko:"23번 고객님, 이쪽으로 오세요. 어떤 거 도와드릴까요?",en:"Customer 23, this way please. How can I help?"},
    {who:"me",type:"build",en:"Say you came to open an account.",answer:["통장","만들러","왔어요"],extra:["주세요","어디"]},
    {who:"them",ko:"외국인등록증이랑 여권 있으세요?",en:"Do you have your residence card and passport?"},
    {who:"me",type:"pick",en:"Yes, here they are.",options:["네, 여기 있어요","네, 소지하고 있습니다","있어"],answer:0,
@@ -162,9 +171,11 @@ const LIFE=[
    {who:"me",type:"pick",en:"Yes, please do both.",options:["네, 같이 해 주세요","체크카드 발급을 희망합니다","카드 줘"],answer:0,
     notes:{1:"Sounds like a written form.",2:"반말 command. Rude."},kinds:{1:"formal",2:"rude"}},
    {who:"them",ko:"여기 비밀번호 네 자리 눌러 주세요.",en:"Please enter a 4-digit PIN here."},
-   {who:"them",ko:"다 됐습니다. 카드는 바로 나가요.",en:"All done. The card comes out right away."},
-   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank her."}],
-  mission:{title:"Open an account, or ask one question at a bank, in Korean.",say:"통장 만들러 왔어요.",tip:"Take a 번호표 first."}},
+   {who:"them",ko:"다 됐습니다. 카드는 바로 드릴게요.",en:"All done. I'll give you the card right away."},
+   {who:"me",type:"say",ko:"감사합니다. 카드는 오늘부터 쓸 수 있어요?",en:"Thank her and ask if you can use the card from today."},
+   {who:"them",ko:"네, 지금 바로 쓰실 수 있어요.",en:"Yes, you can use it right away."}],
+  words:[{ko:"돈",en:"money",emo:"💵"},{ko:"통장",en:"bankbook",emo:"📒"},{ko:"동전",en:"coin",emo:"🪙"},{ko:"지갑",en:"wallet",emo:"👛"},{ko:"번호표",en:"number ticket",emo:"🎫"}]
+  ,mission:{title:"Open an account, or ask one question at a bank, in Korean.",say:"통장 만들러 왔어요.",tip:"Take a 번호표 first."}},
 
  {code:"휴대폰",photo:"photos/phone.jpg",ko:"휴대폰 매장",en:"Phone shop",brands:"유심 · 요금제",
   scene:"phone",sub:"Getting a SIM, 17:00",who:"매장 직원",whoEn:"phone shop staff",
@@ -187,8 +198,9 @@ const LIFE=[
    {who:"them",ko:"무제한은 한 달에 삼만 삼천 원이에요.",en:"Unlimited is 33,000 won a month."},
    {who:"me",type:"pick",en:"Ask if there's something cheaper.",options:["좀 더 싼 거 있어요?","더 저렴한 요금제가 존재합니까?","비싸!"],answer:0,
     notes:{1:"Sounds like a textbook.",2:"Blunt. 'Expensive!' won't make friends."},kinds:{1:"formal",2:"rude"}},
-   {who:"them",ko:"그럼 이거요. 이만 원짜리. 여권 주시겠어요?",en:"Then this one. 20,000 won. May I have your passport?"},
-   {who:"me",type:"say",ko:"네, 여기요",ro:"ne, yeogiyo",en:"Hand it over."}],
+   {who:"them",ko:"그럼 이거 있어요. 이만 원짜리. 여권 주시겠어요?",en:"Then there's this one. 20,000 won. May I have your passport?"},
+   {who:"me",type:"say",ko:"네, 여기 있어요. 그럼 이걸로 할게요.",en:"Hand it over and say you'll take that one."}],
+  words:[{ko:"휴대폰",en:"cell phone",emo:"📱"},{ko:"충전기",en:"charger",emo:"🔌"},{ko:"이어폰",en:"earphones",emo:"🎧"},{ko:"배터리",en:"battery",emo:"🔋"},{ko:"와이파이",en:"Wi-Fi",emo:"📶"}],
   mission:{title:"Ask a phone shop about a cheaper plan, in Korean.",say:"좀 더 싼 거 있어요?",tip:"Prepaid = 선불."}},
 
  {code:"부동산",photo:"photos/realestate.jpg",ko:"부동산",en:"Real estate office",brands:"원룸 · 월세",
@@ -212,8 +224,10 @@ const LIFE=[
    {who:"them",ko:"인터넷이랑 수도요. 지금 한번 보러 가실래요?",en:"Internet and water. Want to go see it now?"},
    {who:"me",type:"pick",en:"Yes, you want to see it now.",options:["네, 지금 볼 수 있어요?","괜찮아요","봐"],answer:0,
     notes:{1:"Here 괜찮아요 means 'no thanks'. He'll think you're not interested.",2:"반말. Too casual."},kinds:{1:"meaning",2:"casual"}},
-   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank him."}],
-  mission:{title:"Ask a 부동산 about a 원룸 and its 관리비, even if you aren't moving.",say:"원룸 구하고 있어요.",tip:"Then: 관리비에 뭐 포함돼요?"}}
+   {who:"me",type:"say",ko:"좋아요. 지금 같이 보러 가요. 혹시 바로 들어갈 수 있어요?",en:"Agree to go now, and ask if you can move in right away."},
+   {who:"them",ko:"네, 다음 주부터 들어갈 수 있어요.",en:"Yes, you can move in from next week."}],
+  words:[{ko:"집",en:"house, home",emo:"🏠"},{ko:"열쇠",en:"key",emo:"🔑"},{ko:"침대",en:"bed",emo:"🛏️"},{ko:"계약서",en:"contract",emo:"📝"},{ko:"세탁기",en:"washing machine",emo:"🧺"}]
+  ,mission:{title:"Ask a 부동산 about a 원룸 and its 관리비, even if you aren't moving.",say:"원룸 구하고 있어요.",tip:"Then: 관리비에 뭐 포함돼요?"}}
 ];
 
 // ---------- Busan ----------
@@ -237,8 +251,9 @@ const BUSAN=[
    {who:"them",ko:"아이고, 그라믄 이만 오천 원 해 주께.",en:"Oh my, okay then, I'll do 25,000."},
    {who:"me",type:"build",en:"Say you'll eat it here.",answer:["여기서","먹을게요"],extra:["포장","주세요"]},
    {who:"them",ko:"위층 올라가믄 된다~",en:"Just go upstairs~"},
-   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank her."}],
-  mission:{title:"Next time you travel: buy something at a traditional market and ask for a small discount.",say:"좀 깎아 주세요.",tip:"Smile. It's a game, not a fight."}},
+   {who:"me",type:"say",ko:"감사합니다. 맛있게 먹을게요!",en:"Thank her and say you'll enjoy it."}],
+  words:[{ko:"생선",en:"fish (food)",emo:"🐟"},{ko:"회",en:"sliced raw fish",emo:"🍣"},{ko:"새우",en:"shrimp",emo:"🦐"},{ko:"문어",en:"octopus",emo:"🐙"},{ko:"게",en:"crab",emo:"🦀"}]
+  ,mission:{title:"Next time you travel: buy something at a traditional market and ask for a small discount.",say:"좀 깎아 주세요.",tip:"Smile. It's a game, not a fight."}},
 
  {code:"찜질방",photo:"photos/jjimjilbang.jpg",ko:"찜질방",en:"Jjimjilbang (bathhouse)",brands:"해운대",travel:true,
   scene:"jjimjil",sub:"Busan · Haeundae, 21:00",who:"직원",whoEn:"front desk",
@@ -259,8 +274,10 @@ const BUSAN=[
    {who:"them",ko:"옷이랑 수건 여기 있어요. 신발은 저기 신발장에 넣으세요.",en:"Here are clothes and a towel. Shoes go in the shoe locker over there."},
    {who:"me",type:"build",en:"Ask for one more towel.",answer:["수건","하나","더","주세요"],extra:["몇","있어요"]},
    {who:"them",ko:"네, 여기요~",en:"Sure, here~"},
-   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank her."}],
-  mission:{title:"Next time you go to a 찜질방, check in in Korean.",say:"한 명이요. 수건 하나 더 주세요.",tip:"Shoes first, then the counter."}},
+   {who:"me",type:"say",ko:"감사합니다. 혹시 식혜는 어디서 사요?",en:"Thank her and ask where to buy sikhye (sweet rice drink)."},
+   {who:"them",ko:"이층 매점에 있어요~ 계란도 같이 드셔 보세요!",en:"At the snack bar on the 2nd floor~ Try the eggs too!"}],
+  words:[{ko:"계란",en:"egg",emo:"🥚"},{ko:"땀",en:"sweat",emo:"💦"},{ko:"신발",en:"shoes",emo:"👟"},{ko:"식혜",en:"sweet rice drink",emo:"🥤"},{ko:"목욕",en:"bath",emo:"🛁"}]
+  ,mission:{title:"Next time you go to a 찜질방, check in in Korean.",say:"한 명이요. 수건 하나 더 주세요.",tip:"Shoes first, then the counter."}},
 
  {code:"부산택시",photo:"photos/busan-taxi.jpg",ko:"부산 택시",en:"Busan taxi (dialect)",brands:"사투리",travel:true,
   scene:"taxi",sub:"Busan · 사투리 corner",who:"기사님",whoEn:"taxi driver (Busan dialect)",
@@ -281,7 +298,8 @@ const BUSAN=[
    {who:"me",type:"pick",en:"Be modest, the Korean way.",options:["아니에요, 아직 잘 못해요","네, 저는 한국어를 잘합니다","알아"],answer:0,
     notes:{1:"Agreeing with a compliment sounds proud. Koreans deflect it.",2:"반말 'I know.' Rude."},kinds:{1:"formal",2:"rude"}},
    {who:"them",ko:"맞나? 다 왔다. 만 이천 원.",en:"Really? We're here. 12,000 won."},
-   {who:"me",type:"say",ko:"감사합니다",ro:"gamsahamnida",en:"Thank him as you pay."}],
+   {who:"me",type:"say",ko:"카드로 할게요. 덕분에 빨리 왔어요, 감사합니다!",en:"Pay by card and thank him for the quick ride."}],
+  words:[{ko:"바다",en:"sea",emo:"🌊"},{ko:"다리",en:"bridge",emo:"🌉"},{ko:"해변",en:"beach",emo:"🏖️"},{ko:"갈매기",en:"seagull",emo:"🕊️"},{ko:"산",en:"mountain",emo:"⛰️"}],
   mission:{title:"Next time you're in Busan, catch one dialect word and ask what it means.",say:"그게 무슨 뜻이에요?",tip:"Locals love explaining their dialect."}}
 ];
 

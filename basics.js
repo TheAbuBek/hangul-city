@@ -28,7 +28,7 @@ window.BASICS={
     {type:"pick",prompt:"Which vowel do you hear?",speak:"이",options:["ㅣ","ㅡ","ㅐ","ㅓ"],answer:0}]},
 
   {id:"consonants",ko:"자음",en:"Consonants",
-   intro:"자음은 입 모양이에요!",introEn:"Consonants are shaped like your mouth!",
+   intro:"자음은 입 모양을 보고 만들었어요!",introEn:"Consonants were made from the shape of your mouth!",
    cards:[
     {big:"ㄱ",say:"가",sound:"g / k",note:"The shape of your tongue touching the back of your mouth.",ex:"가방 (bag)"},
     {big:"ㄴ",say:"나",sound:"n",note:"Your tongue touching behind your top teeth.",ex:"나 (me)"},
@@ -69,8 +69,27 @@ window.BASICS={
     {type:"pick",prompt:"택시",options:["taxi","text","tax","tissue"],answer:0},
     {type:"pick",prompt:"Which word do you hear?",speak:"라면",options:["라면","나면","라민","다면"],answer:0}]},
 
+  {id:"greetings",ko:"인사 · 자기소개",en:"Greetings & introducing yourself",
+   intro:"이제 자기소개를 해 봐요!",introEn:"Now let's introduce ourselves!",
+   cards:[
+    {big:"안녕하세요",say:"안녕하세요",sound:"annyeonghaseyo",note:"Hello. Any time of day, with anyone. Add a small bow.",ex:""},
+    {big:"처음 뵙겠습니다",say:"처음 뵙겠습니다",sound:"cheoeum boepgetseumnida",note:"'Nice to meet you' for a first meeting with a professor, boss or older person. Polite and set.",ex:""},
+    {big:"만나서 반가워요",say:"만나서 반가워요",sound:"mannaseo bangawoyo",note:"'Nice to meet you' with classmates and people your age. The everyday one.",ex:""},
+    {big:"저는 ○○이에요 · 예요",say:"저는 민준이에요. 저는 지수예요.",sound:"jeoneun ○○ieyo · yeyo",note:"I'm ○○. Name ends in a consonant → 이에요 (민준이에요). Ends in a vowel → 예요 (지수예요).",ex:"저는 지수예요 (I'm Jisu)"},
+    {big:"○○에서 왔어요",say:"베트남에서 왔어요",sound:"○○eseo wasseoyo",note:"I'm from ○○. Put your country first: 우즈베키스탄에서 왔어요, 중국에서 왔어요.",ex:"베트남에서 왔어요 (I'm from Vietnam)"},
+    {big:"유학생이에요",say:"유학생이에요",sound:"yuhaksaengieyo",note:"I'm an international student. Working? Say 회사원이에요 (I'm an office worker).",ex:"세종대 유학생이에요"},
+    {big:"잘 부탁드려요",say:"잘 부탁드려요",sound:"jal butakdeuryeoyo",note:"How Koreans end an introduction: 'please be good to me / I look forward to working with you.'",ex:""},
+    {big:"안녕히 가세요 · 계세요",say:"안녕히 가세요. 안녕히 계세요.",sound:"annyeonghi gaseyo · gyeseyo",note:"Goodbye. 가세요 to the person leaving, 계세요 to the person staying. Leaving a shop? 안녕히 계세요.",ex:""}],
+   quiz:[
+    {type:"pick",prompt:"You meet a new classmate for the first time.",options:["만나서 반가워요","잘 먹었습니다","안녕히 계세요","수고하세요"],answer:0,notes:{1:"You say that after a meal.",2:"That's goodbye when you are the one leaving.",3:"That's what you say leaving a shop."}},
+    {type:"pick",prompt:"Your name is 지수. Introduce yourself.",options:["저는 지수예요","저는 지수이에요","저는 지수 있어요","저는 지수 해요"],answer:0,notes:{1:"지수 ends in a vowel (수), so it's 예요, not 이에요.",2:"있어요 means 'there is / I have'.",3:"해요 means 'I do'."}},
+    {type:"pick",prompt:"Say you're from Vietnam.",options:["베트남에서 왔어요","베트남에 가요","베트남에 있어요","베트남을 좋아해요"],answer:0,notes:{1:"That means 'I'm going to Vietnam'.",2:"That means 'I'm in Vietnam (now)'.",3:"That means 'I like Vietnam'."}},
+    {type:"pick",prompt:"You leave a shop. The clerk stays.",options:["안녕히 계세요","안녕히 가세요","처음 뵙겠습니다","잘 부탁드려요"],answer:0,notes:{1:"가세요 is for the person who leaves. You are leaving, so say 계세요 to the one staying.",2:"That's for meeting someone for the first time.",3:"That ends an introduction, not a visit to a shop."}},
+    {type:"pick",prompt:"Which phrase do you hear?",speak:"잘 부탁드려요",options:["잘 부탁드려요","잘 먹었습니다","잘 지내요","잘 가요"],answer:0,notes:{1:"잘 먹었습니다 is 'I ate well'. Listen for 부탁.",2:"잘 지내요 is 'I'm doing well'.",3:"잘 가요 is a casual 'bye'."}},
+    {type:"say",prompt:"Introduce yourself out loud.",intro:true}]},
+
   {id:"numbers",ko:"숫자",en:"Numbers",
-   intro:"한국어는 숫자가 두 개 있어요!",introEn:"Korean has two number systems!",
+   intro:"한국어에는 숫자를 읽는 방법이 두 가지 있어요!",introEn:"There are two ways to read numbers in Korean!",
    cards:[
     {big:"일 이 삼 사 오",say:"일, 이, 삼, 사, 오",sound:"il i sam sa o",note:"Sino-Korean numbers 1–5. Used for money, floors, minutes, phone numbers.",ex:"오 층 (5th floor)"},
     {big:"육 칠 팔 구 십",say:"육, 칠, 팔, 구, 십",sound:"yuk chil pal gu sip",note:"6–10. Then 백 = 100, 천 = 1,000, 만 = 10,000.",ex:"십 분 (10 minutes)"},
@@ -87,9 +106,8 @@ window.BASICS={
     {type:"pick",prompt:"Which price do you hear?",speak:"오천 원",options:["5,000원","500원","50,000원","4,000원"],answer:0,notes:{1:"500 is 오백. You heard 천 (1,000).",2:"50,000 is 오만. You heard 천 (1,000), not 만.",3:"4 is 사 (사천). You heard 오, which is 5."}}]},
 
   {id:"phrases",ko:"기본 표현",en:"Survival phrases",
-   intro:"이거 알면 어디든 갈 수 있어요!",introEn:"Know these and you can go anywhere!",
+   intro:"어디서나 사용해 봐요!",introEn:"Use these everywhere!",
    cards:[
-    {big:"안녕하세요",say:"안녕하세요",sound:"annyeonghaseyo",note:"Hello. Works any time of day, with anyone.",ex:""},
     {big:"감사합니다",say:"감사합니다",sound:"gamsahamnida",note:"Thank you. Always safe.",ex:""},
     {big:"네 · 아니요",say:"네, 아니요",sound:"ne · aniyo",note:"Yes · No. 네 also means 'okay, I'm listening.'",ex:""},
     {big:"저기요",say:"저기요",sound:"jeogiyo",note:"Excuse me! To get someone's attention.",ex:""},
@@ -109,3 +127,4 @@ window.BASICS={
 // 한글 학교 is the first stop in every city, with one shared progress.
 window.CITIES.filter(c=>!c.soon).forEach(c=>c.places.unshift(window.BASICS));
 window.BASICS.photo="";
+window.BASICS.words=[{ko:"커피",en:"coffee",emo:"☕"},{ko:"라면",en:"ramen",emo:"🍜"},{ko:"사과",en:"apple",emo:"🍎"},{ko:"우유",en:"milk",emo:"🥛"},{ko:"빵",en:"bread",emo:"🍞"},{ko:"모자",en:"hat",emo:"🧢"}];

@@ -43,6 +43,11 @@ let P=store.get("hc_progress",null)||{st:{},missions:[],units:[],wrong:{}};
 const save=()=>store.set("hc_progress",P);
 const stateOf=p=>P.st[p.code]||(p.code===BASICS.code?"open":"locked");
 const setState=(p,s)=>{P.st[p.code]=s;};
+// Stations added later: learners who already got past one keep their progress.
+function syncStations(){Object.values(SEQ).forEach(seq=>seq.forEach((x,i)=>{if(x.kind!=="review"||stateOf(x)!=="locked")return;
+  const nx=seq[i+1];
+  if(nx&&stateOf(nx)!=="locked")setState(x,"done");
+  else if(x.covers.every(p=>stateOf(p)==="done"))setState(x,"open");}));save();}
 const missionDone=p=>P.missions.includes(p.code);
 const unitsDone=()=>new Set(P.units);
 
@@ -51,8 +56,18 @@ if(profile&&!profile.role)profile=null;
 if(profile&&!profile.form){profile.form="A";profile.signupAt=profile.signupAt||Date.now();} // old sign-ups re-register once for the new questions
 let cityId=store.get("hc_city",null);
 const city=()=>CITIES.find(c=>c.id===cityId)||CITIES[0];
+// ---------- review stations: one after every 2 places ----------
+const STATIONS={};
+function stationFor(c,k,covers){const code=`R:${c.id}:${k}`;
+  return STATIONS[code]||(STATIONS[code]={code,kind:"review",k,city:c.id,covers,ko:`복습 정류장 ${k}`,en:`Review station ${k}`,scene:"station",
+    sub:`Review · ${covers.map(x=>x.ko).join(" + ")}`,who:"한글이",whoEn:"your Hangul City guide",mascot:true,photo:""});}
+function seqOf(c){const out=[];let run=[],k=0;
+  c.places.forEach(p=>{out.push(p);if(p.kind==="basics")return;run.push(p);if(run.length===2){out.push(stationFor(c,++k,run));run=[];}});
+  if(run.length)out.push(stationFor(c,++k,run));return out;}
+const SEQ={};CITIES.filter(c=>!c.soon).forEach(c=>SEQ[c.id]=seqOf(c));
+const rankOf=p=>{const c=CITIES.find(c=>!c.soon&&c.places.includes(p));return c?c.places.filter(x=>x.kind!=="basics").indexOf(p):0;};
 let PLACES=[];
-function setCity(id){cityId=id;store.set("hc_city",id);PLACES=city().places;}
+function setCity(id){cityId=id;store.set("hc_city",id);PLACES=SEQ[id]||city().places;}
 setCity(cityId||(profile&&profile.home==="busan"?"busan":"seoul"));
 
 const LV=()=>(profile&&profile.tested)||"beginner";
@@ -67,6 +82,7 @@ let view=!profile?"welcome":(!profile.tested?"placeIntro":"map");
 let pi=0, line=0, picked=[], bank=[], mistakes=0, lessonI=0, log=[], missionStage="ticket";
 let armReset=false, toastTimer=null, turnTimer=null;
 if(profile) S.track("session_start","",cityId);
+syncStations();
 
 function toast(msg){
   let t=document.getElementById("toast");
@@ -82,9 +98,8 @@ function welcome(){
   const n=el(`<div class="col">
     <div class="hero">
       <p class="label">For foreigners & exchange students in Korea</p>
-      <h1>한글 시티 <span class="en-title">Hangul City</span></h1>
+      <h1 class="logo"><img src="img/logo.png" alt="한글 시티 Hangul City" width="720" height="327"></h1>
       <p>A map of the places you'll actually go in Korea. Talk to the people there, learn what they really say, then go do it for real.</p>
-      <div class="hero-chars">${["편의점","식당","병원"].map(c=>`<div>${charSVG(seoul.find(p=>p.code===c).char)}</div>`).join("")}</div>
     </div>
     <form class="panel" id="f" novalidate>
       <div class="field"><label for="nick">Nickname</label><input id="nick" maxlength="20" autocomplete="nickname" placeholder="e.g. Minh"></div>
@@ -145,7 +160,7 @@ function placeIntro(){
   const v=el(`<div class="col">
     <div class="hero"><p class="label">Hi ${esc(profile.nick)}!</p><h1>Quick level check</h1>
       <p>8 short questions, about 2 minutes. Your answers decide where you start on the map and how much help you get.</p>
-      <div class="hero-chars"><div>${charSVG(BASICS.char)}</div></div></div>
+      <div class="hero-chars"><div><img class="mascot" src="img/mascot.png" alt=""></div></div></div>
     <div class="panel"><button class="act" id="go">Take the test</button>
       <button class="act alt" id="beg">I'm a beginner, skip the test</button></div></div>`);
   app.replaceChildren(v);
@@ -203,7 +218,7 @@ function postDue(){
 function surveyDue(){
   if(!profile||profile.surveyDone)return false;
   if(/survey/.test(location.search))return true;
-  return clearedCount()>=3;
+  return clearedCount()>=2;
 }
 function startPost(){testMode="post";pq=0;pscore=0;porder=TEST_FORMS[postForm()].map(q=>({...q,order:shuffle(q.options.map((_,i)=>i))}));S.track("posttest_start","",postForm());go("placement");}
 function finishPost(){
@@ -214,7 +229,7 @@ function finishPost(){
   const v=el(`<div class="col"><div class="hero"><p class="label">Progress check</p>
       <h1>${pscore}/8</h1>
       <p>${pre==null?"You skipped the first level check, so there's nothing to compare with. Thanks, this still helps.":diff>0?`Up ${diff} from your first check (${pre}/8). Your practice is working.`:diff===0?`Same as your first check (${pre}/8). Keep going, the review quizzes help most.`:`Your first check was ${pre}/8. A different set of questions can be harder, keep practising.`}</p>
-      <div class="hero-chars"><div>${charSVG(BASICS.char)}</div></div></div>
+      <div class="hero-chars"><div><img class="mascot" src="img/mascot.png" alt=""></div></div></div>
     <div class="panel">${mistakesReview()}<button class="act" id="ok">Back to the map</button></div></div>`);
   app.replaceChildren(v);document.getElementById("ok").onclick=()=>go("map");
 }
@@ -253,52 +268,112 @@ function applyLevel(lvl,score){
     CITIES.filter(c=>!c.soon).forEach(c=>{const p=c.places[1];if(p&&stateOf(p)==="locked")setState(p,"open");});
   }
   if(lvl==="advanced")CITIES[0].places.slice(1,4).forEach(p=>{if(stateOf(p)==="locked")setState(p,"open");});
-  save();
+  save();syncStations();
+}
+
+// ---------- city scenery (what each city is known for) ----------
+const ART={
+  mountains:W=>`<path d="M0 64 L34 26 L58 44 L96 8 L132 46 L168 22 L206 52 L244 14 L286 46 L320 24 L${W} 50 L${W} 0 L0 0Z" fill="var(--mtn)"/><path d="M96 8 L108 20 L100 22 L90 15Z M244 14 L256 26 L246 27 L238 20Z" fill="var(--mtn-top)"/>`,
+  namsan:(x,y)=>`<g transform="translate(${x} ${y})"><ellipse cx="0" cy="34" rx="62" ry="30" fill="var(--hill)"/><rect x="-2.5" y="-46" width="5" height="62" fill="#C9CED6"/><rect x="-11" y="-30" width="22" height="9" rx="3" fill="#E9ECF0" stroke="#9AA3AF"/><rect x="-7" y="-40" width="14" height="8" rx="2" fill="#E9ECF0" stroke="#9AA3AF"/><rect x="-1.2" y="-70" width="2.4" height="26" fill="#D9473B"/><rect x="-1.2" y="-62" width="2.4" height="5" fill="#fff"/><text y="62" text-anchor="middle" class="lm">N서울타워</text></g>`,
+  palace:(x,y)=>`<g transform="translate(${x} ${y})"><rect x="-38" y="6" width="76" height="20" fill="#B9AE98"/><rect x="-10" y="12" width="20" height="14" rx="9" fill="#5B4636"/><rect x="-30" y="-10" width="60" height="16" fill="#B73A2E"/><rect x="-26" y="-6" width="52" height="4" fill="#3E8E6E"/><path d="M-46 -10 Q-30 -16 0 -18 Q30 -16 46 -10 Q36 -24 0 -28 Q-36 -24 -46 -10Z" fill="#3B4A44"/><path d="M-30 -22 Q0 -40 30 -22Z" fill="#3B4A44"/><text y="42" text-anchor="middle" class="lm">경복궁</text></g>`,
+  lotte:(x,y)=>`<g transform="translate(${x} ${y})"><path d="M-12 26 L-3 -66 L3 -66 L12 26Z" fill="#B7C7D8" stroke="#8EA2B8"/><path d="M-3 -66 L0 -78 L3 -66Z" fill="#8EA2B8"/><path d="M-7 0 L7 0 M-8.5 10 L8.5 10 M-5.5 -20 L5.5 -20 M-4.2 -40 L4.2 -40" stroke="#E6EEF6" stroke-width="2"/><rect x="-34" y="4" width="16" height="22" fill="#D5DCE4"/><rect x="20" y="-2" width="14" height="28" fill="#C9D2DC"/><text y="42" text-anchor="middle" class="lm">롯데타워</text></g>`,
+  apartments:(x,y)=>`<g transform="translate(${x} ${y})">${[-30,0,30].map((dx,k)=>`<rect x="${dx-13}" y="${-34+k%2*8}" width="26" height="${60-k%2*8}" fill="#EDEAE2" stroke="#B9B3A6"/><text x="${dx}" y="${-24+k%2*8}" text-anchor="middle" class="apt">${101+k}동</text>${[0,1,2,3].map(r=>`<rect x="${dx-9}" y="${-16+k%2*8+r*10}" width="18" height="4" fill="#9FB9D4"/>`).join("")}`).join("")}<text y="42" text-anchor="middle" class="lm">아파트</text></g>`,
+  hanok:(x,y)=>`<g transform="translate(${x} ${y})"><rect x="-30" y="0" width="60" height="22" fill="#EFE6D2" stroke="#A88F6A"/><rect x="-8" y="6" width="16" height="16" fill="#8A6A45"/><path d="M-40 2 Q-20 -4 0 -6 Q20 -4 40 2 Q30 -16 0 -20 Q-30 -16 -40 2Z" fill="#4A4F55"/><text y="40" text-anchor="middle" class="lm">한옥</text></g>`,
+  river:(y,W)=>`<g><path d="M0 ${y-20} C90 ${y-34} 200 ${y-4} ${W} ${y-24} L${W} ${y+22} C220 ${y+4} 110 ${y+34} 0 ${y+20}Z" fill="var(--water)"/><path d="M20 ${y} q14 -5 28 0 M230 ${y-6} q14 -5 28 0 M120 ${y+8} q14 -5 28 0" stroke="var(--wave)" stroke-width="2" fill="none"/><text x="${W-14}" y="${y+40}" text-anchor="end" class="lm">한강 Han River</text></g>`,
+  sea:W=>`<rect width="${W}" height="58" fill="var(--water)"/><path d="M0 58 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" fill="var(--sand)"/>${[30,110,200,290].map(x=>`<path d="M${x} 20 q8 -4 16 0" stroke="var(--wave)" stroke-width="2" fill="none"/>`).join("")}`,
+  gwangan:W=>`<g><rect x="30" y="34" width="${W-60}" height="4" fill="#E8ECF2"/>${[110,250].map(x=>`<rect x="${x-3}" y="6" width="6" height="34" fill="#E8ECF2"/>`).join("")}<path d="M30 34 Q70 30 110 8 Q180 34 250 8 Q290 30 ${W-30} 34" stroke="#F2C94C" stroke-width="1.6" fill="none"/><text x="${W-12}" y="52" text-anchor="end" class="lm lm-l">광안대교 Gwangan Bridge</text></g>`,
+  gamcheon:(x,y)=>`<g transform="translate(${x} ${y})"><ellipse cx="0" cy="30" rx="56" ry="22" fill="var(--hill)"/>${[["#F6C85F",-36,4],["#7FB8D6",-18,-6],["#E57A5C",0,2],["#9BCB7A",18,-8],["#C9A0DC",34,4],["#F29CB3",-26,-18],["#7FD1C4",8,-20]].map(([c,dx,dy])=>`<rect x="${dx-8}" y="${dy}" width="16" height="13" fill="${c}" stroke="rgba(0,0,0,.15)"/>`).join("")}<text y="56" text-anchor="middle" class="lm">감천문화마을</text></g>`,
+  haeundae:(x,y)=>`<g transform="translate(${x} ${y})"><rect x="-44" y="18" width="88" height="10" fill="var(--sand)"/><path d="M-30 18 L-26 -54 L-18 -54 L-14 18Z M-6 18 L-3 -68 L5 -68 L8 18Z M16 18 L19 -48 L26 -48 L30 18Z" fill="#AFC3D6" stroke="#8399AF"/><text y="44" text-anchor="middle" class="lm">해운대</text></g>`,
+  lighthouse:(x,y)=>`<g transform="translate(${x} ${y})"><path d="M-9 22 L-6 -24 L6 -24 L9 22Z" fill="#D9473B"/><rect x="-7" y="-10" width="14" height="5" fill="#fff"/><rect x="-6" y="-32" width="12" height="9" fill="#FFE9A8" stroke="#D9473B"/><path d="M-8 -32 L0 -40 L8 -32Z" fill="#D9473B"/><path d="M-30 22 L30 22" stroke="var(--water)" stroke-width="6"/><text y="40" text-anchor="middle" class="lm">등대</text></g>`,
+  boat:(x,y)=>`<g transform="translate(${x} ${y})"><ellipse cx="0" cy="12" rx="44" ry="12" fill="var(--water)"/><path d="M-24 4 L24 4 L18 14 L-18 14Z" fill="#2F6E8F"/><rect x="-6" y="-12" width="14" height="16" fill="#F4F1E6"/><path d="M-2 -12 L-2 -26" stroke="#555" stroke-width="2"/><text y="40" text-anchor="middle" class="lm">고깃배</text></g>`,
+  gulls:(x,y)=>`<path d="M${x} ${y} q5 -5 10 0 q5 -5 10 0 M${x+30} ${y-10} q4 -4 8 0 q4 -4 8 0" stroke="var(--gull)" stroke-width="1.8" fill="none"/>`,
+  beach:(y,W)=>`<g><rect y="${y}" width="${W}" height="60" fill="var(--sand)"/><path d="M0 ${y+30} q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 L${W} ${y+60} L0 ${y+60}Z" fill="var(--water)"/>${[60,150,240].map((x,k)=>`<g transform="translate(${x} ${y+16})"><path d="M-12 0 Q0 -12 12 0Z" fill="${["#E57A5C","#F6C85F","#7FB8D6"][k]}"/><path d="M0 -2 L0 14" stroke="#7A5A3C" stroke-width="1.5"/></g>`).join("")}</g>`
+};
+const CITY_INFO={
+  seoul:{line:"🗼 N Seoul Tower · 🏯 Gyeongbokgung · 🌉 Han River",side:["palace","lotte","river","hanok","apartments"]},
+  busan:{line:"🌉 Gwangan Bridge · 🏖️ Haeundae · 🎨 Gamcheon Village · 🐟 Jagalchi",side:["gamcheon","haeundae","lighthouse","boat"]}
+};
+function cityScenery(id,W,H,stationYs){
+  const A=ART;let back="",front="";
+  if(id==="seoul"){back+=A.mountains(W)+A.namsan(300,80);
+    const pieces=CITY_INFO.seoul.side;
+    stationYs.forEach((y,k)=>{const name=pieces[k%pieces.length];
+      if(name==="river")back+=A.river(y-92,W);
+      else back+=A[name](k%2?298:62,y-6);});}
+  else if(id==="busan"){back+=A.sea(W)+A.gwangan(W)+A.gulls(40,80)+A.gulls(270,96);
+    stationYs.forEach((y,k)=>{const L=CITY_INFO.busan.side;back+=A[L[(k*2)%L.length]](58,y-6)+A[L[(k*2+1)%L.length]](302,y-6);});
+    back+=A.beach(H-60,W);}
+  return back+front;
 }
 
 // ---------- map ----------
 function unlockNext(p){
-  if(p.code===BASICS.code){CITIES.filter(c=>!c.soon).forEach(c=>{const n=c.places[1];if(n&&stateOf(n)==="locked")setState(n,"open");});return c0next();}
+  if(p.code===BASICS.code){CITIES.filter(c=>!c.soon).forEach(c=>{const n=c.places[1];if(n&&stateOf(n)==="locked")setState(n,"open");});return PLACES[1]||null;}
   const i=PLACES.indexOf(p), n=PLACES[i+1];
   if(n&&stateOf(n)==="locked"){setState(n,"open");return n;}
   return null;
-  function c0next(){return PLACES[1]||null;}
 }
 function mapView(){
-  const n=PLACES.length, W=360, H=150+n*170;
-  const pts=PLACES.map((p,i)=>({x:i%2?250:110,y:110+i*170}));
+  const realPlaces=PLACES.filter(p=>p.kind!=="review");
+  const n=realPlaces.length, W=360;
+  const pts=[];let y=110,side=0;
+  PLACES.forEach((p,i)=>{if(i>0)y+=(p.kind==="review"||PLACES[i-1].kind==="review")?180:170;
+    if(p.kind==="review")pts.push({x:180,y});else{pts.push({x:side%2?250:110,y});side++;}});
+  const H=y+(cityId==="busan"?210:150);
   let road=`M${pts[0].x} ${pts[0].y}`;
-  for(let i=1;i<n;i++){const a=pts[i-1],b=pts[i];road+=` C${a.x} ${a.y+95} ${b.x} ${b.y-95} ${b.x} ${b.y}`;}
-  let trees="";for(let y=40,k=0;y<H-30;y+=85,k++){const x=k%2?28+(k*7%14):332-(k*5%14);const x2=k%3?180:0;
-    trees+=`<g transform="translate(${x} ${y})"><rect x="-2" y="4" width="4" height="10" fill="var(--trunk)"/><circle r="12" fill="var(--tree)"/></g>`;
-    if(x2&&k%4===1)trees+=`<g transform="translate(${x2} ${y+40})"><circle r="9" fill="var(--tree)"/></g>`;}
+  for(let i=1;i<PLACES.length;i++){const a=pts[i-1],b=pts[i],d=(b.y-a.y)*.56;road+=` C${a.x} ${a.y+d} ${b.x} ${b.y-d} ${b.x} ${b.y}`;}
+  const stationYs=pts.filter((_,i)=>PLACES[i].kind==="review").map(p=>p.y);
+  let trees="";for(let ty=150,k=0;ty<H-80;ty+=85,k++){const x=k%2?22+(k*7%10):338-(k*5%10);
+    if(stationYs.some(sy=>Math.abs(sy-ty)<90))continue;
+    trees+=`<g transform="translate(${x} ${ty})"><rect x="-2" y="4" width="4" height="10" fill="var(--trunk)"/><circle r="11" fill="var(--tree)"/></g>`;}
   const cur=PLACES.findIndex(p=>stateOf(p)==="open");
+  const lockIcon=`<g transform="translate(0 -6)" class="lock"><circle r="20" fill="var(--lock-bg)"/><path d="M-7 -2 v-5 a7 7 0 0 1 14 0 v5" fill="none" stroke="#fff" stroke-width="3.2"/><rect x="-10" y="-2" width="20" height="15" rx="3" fill="#fff"/><circle cy="5" r="2.4" fill="var(--lock-bg)"/></g>`;
+  const check=(x,y)=>`<g transform="translate(${x} ${y})"><circle r="15" fill="var(--ok)"/><path d="M-7 0 l5 5 l9 -10" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>`;
+  const pin=(x,y)=>`<g class="pin" transform="translate(${x} ${y})"><path d="M0 22 C-14 6 -14 -14 0 -14 C14 -14 14 6 0 22Z" fill="var(--accent)" stroke="#fff" stroke-width="2"/><text y="3" text-anchor="middle" class="pin-t">${esc((profile.nick||"?")[0].toUpperCase())}</text></g>`;
+  let num=0;
   const nodes=PLACES.map((p,i)=>{
     const {x,y}=pts[i], st=stateOf(p), locked=st==="locked", isDone=st==="done";
     const prev=PLACES[i-1];
+    if(p.kind==="review"){
+      return `<g class="bld station ${st}" data-i="${i}" transform="translate(${x} ${y})" tabindex="0" role="button" aria-label="${p.en}${locked?", locked":""}">
+        ${st==="open"?`<circle class="ring" cx="0" cy="-20" r="40" fill="none" stroke="var(--accent)" stroke-width="3"/>`:""}
+        <g class="art"><ellipse cx="0" cy="30" rx="34" ry="8" fill="var(--plot)"/><rect x="-3" y="-30" width="6" height="60" rx="2" fill="#5B6472"/>
+          <circle cy="-30" r="24" fill="${locked?"#8B93A1":"var(--accent)"}" stroke="#fff" stroke-width="4"/><text y="-25" text-anchor="middle" class="st-t">복습</text></g>
+        <g transform="translate(0 50)"><rect x="-78" y="-14" width="156" height="${locked?56:42}" rx="8" fill="var(--sign)" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="${locked?"4 3":"0"}"/>
+          <text y="4" text-anchor="middle" class="sign-ko">🚏 ${p.ko}</text>
+          <text y="20" text-anchor="middle" class="sign-en">${p.covers.map(c=>c.ko).join(" + ")}</text>
+          ${locked?`<text y="36" text-anchor="middle" class="sign-lock">Finish ${prev.ko} first</text>`:""}</g>
+        ${locked?`<g transform="translate(0 -24)">${lockIcon}</g>`:""}${isDone?check(32,-46):""}${i===cur?pin(-40,-50):""}</g>`;
+    }
+    num++;
     return `<g class="bld ${st}" data-i="${i}" transform="translate(${x} ${y})" tabindex="0" role="button" aria-label="${p.en}${locked?", locked":""}">
       <ellipse cx="0" cy="44" rx="70" ry="12" fill="var(--plot)"/>
       ${st==="open"?`<circle class="ring" cx="0" cy="0" r="74" fill="none" stroke="var(--accent)" stroke-width="3"/>`:""}
       <g class="art">${buildingSVG(p.scene)}</g>
       <g transform="translate(0 66)"><rect x="-72" y="-14" width="144" height="${locked?56:42}" rx="8" fill="var(--sign)" stroke="var(--sign-line)" stroke-width="1.5"/>
-        <text y="4" text-anchor="middle" class="sign-ko">${i+1}. ${p.ko}</text>
+        <text y="4" text-anchor="middle" class="sign-ko">${num}. ${p.ko}</text>
         <text y="20" text-anchor="middle" class="sign-en">${p.en}</text>
-        ${locked?`<text y="36" text-anchor="middle" class="sign-lock">Finish ${prev.ko} first</text>`:""}</g>
-      ${locked?`<g transform="translate(0 -6)" class="lock"><circle r="20" fill="var(--lock-bg)"/><path d="M-7 -2 v-5 a7 7 0 0 1 14 0 v5" fill="none" stroke="#fff" stroke-width="3.2"/><rect x="-10" y="-2" width="20" height="15" rx="3" fill="#fff"/><circle cy="5" r="2.4" fill="var(--lock-bg)"/></g>`:""}
+        ${locked?`<text y="36" text-anchor="middle" class="sign-lock">Finish ${prev.kind==="review"?"the review station":prev.ko} first</text>`:""}</g>
+      ${locked?lockIcon:""}
       ${missionDone(p)?`<g transform="translate(-52 -50)"><circle r="15" fill="var(--gold)"/><path d="M0 -9 L2.6 -3 L9 -2.8 L4 1.4 L5.6 8 L0 4.4 L-5.6 8 L-4 1.4 L-9 -2.8 L-2.6 -3Z" fill="#fff"/></g>`:""}
-      ${isDone?`<g transform="translate(52 -50)"><circle r="15" fill="var(--ok)"/><path d="M-7 0 l5 5 l9 -10" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>`:""}
-      ${i===cur?`<g class="pin" transform="translate(-56 -58)"><path d="M0 22 C-14 6 -14 -14 0 -14 C14 -14 14 6 0 22Z" fill="var(--accent)" stroke="#fff" stroke-width="2"/><text y="3" text-anchor="middle" class="pin-t">${esc((profile.nick||"?")[0].toUpperCase())}</text></g>`:""}
+      ${isDone?check(52,-50):""}
+      ${i===cur?pin(-56,-58):""}
     </g>`;}).join("");
-  const cleared=PLACES.filter(p=>stateOf(p)==="done").length, stars=PLACES.filter(missionDone).length;
+  const cleared=realPlaces.filter(p=>stateOf(p)==="done").length, stars=realPlaces.filter(missionDone).length;
+  const openStation=PLACES.find(p=>p.kind==="review"&&stateOf(p)==="open");
+  const nWords=myWords().length;
   const v=el(`<div class="col">
-    <div class="hud"><div><b class="hud-title">한글 시티</b><span class="hello">안녕, ${esc(profile.nick)}! · ${cfg().name}</span></div>
+    <div class="hud"><div><b class="hud-title"><img class="hud-face" src="img/face.png" alt="" width="26" height="23">한글 시티</b><span class="hello">안녕, ${esc(profile.nick)}! · ${cfg().name}</span></div>
       <div class="hud-score"><b>${cleared}<small>/${n}</small></b><span>${city().ko} cleared · ${stars} ★</span></div></div>
     ${postDue()&&!postSnooze?`<div class="banner"><div><b>Progress check</b><span>8 questions, 2 minutes. See how much you've improved.</span></div><div class="row"><button class="act" id="post">Start</button><button class="act alt" id="postlater">Later</button></div></div>`
-      :surveyDue()&&!surveySnooze?`<div class="banner"><div><b>Quick feedback</b><span>4 questions, 1 minute. It helps us make the app better.</span></div><div class="row"><button class="act" id="surv">Give feedback</button><button class="act alt" id="survlater">Later</button></div></div>`:""}
+      :surveyDue()&&!surveySnooze?`<div class="banner"><div><b>Quick feedback</b><span>4 questions, 1 minute. It helps us make the app better.</span></div><div class="row"><button class="act" id="surv">Give feedback</button><button class="act alt" id="survlater">Later</button></div></div>`
+      :openStation?`<div class="banner"><div><b>🚏 ${openStation.ko} is open</b><span>8 questions on ${openStation.covers.map(c=>c.ko).join(" + ")}. Pass it to unlock the next place.</span></div><div class="row"><button class="act" id="station">Start review</button></div></div>`:""}
     <div class="cities">${CITIES.map(c=>`<button class="city ${c.id===cityId?"on":""} ${c.soon?"soon":""}" data-c="${c.id}">${c.ko}<small>${c.soon?"soon":c.en}</small></button>`).join("")}</div>
+    ${CITY_INFO[cityId]?`<p class="cityline">${CITY_INFO[cityId].line}</p>`:""}
     <button class="act compete" id="compete">대결 · Compete with friends</button>
+    <button class="act alt wordsbtn" id="words">🃏 단어 카드 · Word cards <span class="badge">${nWords}</span></button>
     <div class="mapwrap"><svg class="map" viewBox="0 0 ${W} ${H}" aria-label="Map of ${city().en}">
-      <rect width="${W}" height="${H}" fill="var(--grass)"/>${trees}
+      <rect width="${W}" height="${H}" fill="var(--grass)"/>${cityScenery(cityId,W,H,stationYs)}${trees}
       <path d="${road}" fill="none" stroke="var(--road)" stroke-width="30" stroke-linecap="round"/>
       <path d="${road}" fill="none" stroke="var(--road-line)" stroke-width="3" stroke-dasharray="10 12"/>
       ${nodes}</svg></div>
@@ -309,8 +384,10 @@ function mapView(){
   app.replaceChildren(v);
   v.querySelectorAll(".bld").forEach(g=>{
     const open=()=>{const i=+g.dataset.i,p=PLACES[i];
-      if(stateOf(p)==="locked"){toast(`Locked. Finish ${PLACES[i-1].ko} (${PLACES[i-1].en}) first to unlock ${p.ko} (${p.en}).`);S.track("locked_tap",p.code);return;}
-      pi=i;S.track(stateOf(p)==="done"?"place_replay":"place_start",p.code);go(p.kind==="basics"?"units":"intro");};
+      if(stateOf(p)==="locked"){const pv=PLACES[i-1];toast(p.kind==="review"?`${p.ko} opens after you finish ${pv.ko} (${pv.en}).`:pv.kind==="review"?`Locked. Pass ${pv.ko} first to unlock ${p.ko} (${p.en}).`:`Locked. Finish ${pv.ko} (${pv.en}) first to unlock ${p.ko} (${p.en}).`);S.track("locked_tap",p.code);return;}
+      pi=i;
+      if(p.kind==="review"){S.track("station_start",p.code);startReview();return;}
+      S.track(stateOf(p)==="done"?"place_replay":"place_start",p.code);go(p.kind==="basics"?"units":"intro");};
     g.addEventListener("click",open);g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});
   });
   v.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const c=CITIES.find(x=>x.id===b.dataset.c);
@@ -319,7 +396,9 @@ function mapView(){
   const qq=id=>document.getElementById(id);
   if(qq("post")){qq("post").onclick=startPost;qq("postlater").onclick=()=>{S.track("posttest_later","","banner");postSnooze=true;render();};}
   if(qq("surv")){qq("surv").onclick=()=>{S.track("survey_open");go("survey");};qq("survlater").onclick=()=>{S.track("survey_later","","banner");surveySnooze=true;render();};}
+  if(qq("station")){qq("station").onclick=()=>{pi=PLACES.indexOf(openStation);S.track("station_start",openStation.code,"banner");startReview();};}
   document.getElementById("compete").onclick=()=>{S.track("rooms_open");go("rooms");};
+  document.getElementById("words").onclick=()=>{S.track("words_open","",nWords);go("words");};
   // Hidden team door: press and hold the title for 2 s, or tap it 5 times fast.
   const ht=v.querySelector(".hud-title");
   if(ht){let t=null,taps=[];
@@ -339,9 +418,9 @@ function mapView(){
 
 // ---------- scene stage with talking character ----------
 function stage(p){
-  return `<div class="stage s-${p.scene}"><div class="backdrop"></div>
-    <div class="npc" id="npc">${charSVG(p.char)}</div><div class="counter"></div>
-    <div class="nametag">${p.who}<small>${p.whoEn}</small></div><div class="bubble-npc" id="bub"></div></div>`;
+  return `<div class="scene"><div class="stage s-${p.scene}"><div class="backdrop"></div>
+    <div class="npc" id="npc">${p.mascot?`<img class="ch mascot" src="img/mascot.png" alt="">`:charSVG(p.char)}</div><div class="counter"></div>
+    <div class="nametag">${p.who}<small>${p.whoEn}</small></div></div><div class="bubble-npc" id="bub" aria-live="polite"></div></div>`;
 }
 let typeTimer=null;
 function bubbleTools(ko,en,showRo){
@@ -387,14 +466,17 @@ function photoCard(p,small){
 function intro(){
   const p=PLACES[pi];
   if(p.kind==="basics"){go("units");return;}
+  if(p.kind==="review"){startReview();return;}
   const rec=cfg().recommend;
+  const nx=PLACES[PLACES.indexOf(p)+1];
   const v=sceneShell(p,`${photoCard(p)}<div class="panel">
       <div class="note info"><b style="color:var(--ink)">Real talk.</b> ${p.culture}</div>
       <div class="row"><button class="act ${rec==="learn"?"":"alt"}" id="learn">Teach me first${rec==="learn"?" ★":""}</button><button class="act ${rec==="practice"?"":"alt"}" id="prac">Jump to practice${rec==="practice"?" ★":""}</button></div>
       <p class="small">★ Recommended for your level (${cfg().name})</p>
+      ${nx&&nx.kind==="review"&&stateOf(nx)!=="done"?`<div class="note heads">🚏 <b>Heads-up:</b> after this place comes ${nx.ko}, a short quiz on ${nx.covers.map(c=>c.ko).join(" and ")}. Pay attention to the phrases!</div>`:""}
     </div>`);
   app.replaceChildren(v);wireBack();
-  say("안녕하세요! 표현 먼저 배워 볼래요?","Hi! Want to learn the key phrases first?");
+  say("안녕하세요! 표현 먼저 배워 볼까요?","Hi! Shall we learn the key phrases first?");
   document.getElementById("learn").onclick=()=>{lessonI=0;S.track("mode",p.code,"learn");go("learn");};
   document.getElementById("prac").onclick=()=>{S.track("mode",p.code,"practice");startPractice();};
 }
@@ -435,7 +517,7 @@ function practice(){
   app.replaceChildren(v);wireBack();
   const turn=document.getElementById("turn");
   const prevThem=[...p.script.slice(0,line)].reverse().find(m=>m.who==="them");
-  if(!cur){S.track("practice_done",p.code,mistakes);react("happy");startReview();return;}
+  if(!cur){S.track("practice_done",p.code,mistakes);go("cleared");return;}
   if(cur.who==="them"){
     say(cur.ko,cur.en).then(()=>{
       if(view!=="practice"||PLACES[pi]!==p)return;
@@ -478,7 +560,12 @@ function buildTurn(c){
   draw();
   n.querySelector("#send").onclick=()=>{
     const got=picked.map(i=>bank[i]);
-    if(got.join(" ")===c.answer.join(" ")){S.track("answer_right",PLACES[pi].code,"build");speak(c.answer.join(" "));advanceMe(c);}
+    if(got.join(" ")===c.answer.join(" ")){const code=PLACES[pi].code, sent=c.answer.join(" ");S.track("answer_right",code,"build");speak(sent);
+      if(rankOf(PLACES[pi])>=2){react("happy");clearInterval(turnTimer);
+        n.innerHTML=`<div class="note ok">✓ Right order!</div>`+sayBlock("Now say the sentence out loud.",sent,cfg().noTranslate?"":rom(sent))+`<button class="back" data-skip style="align-self:center">Skip speaking</button>`;
+        speakBox(n,sent,how=>{S.track("speak_done",code,"build:"+how);advanceMe(c);},code);
+        n.querySelector("[data-skip]").onclick=()=>{S.track("speak_skip",code,"build");advanceMe(c);};}
+      else advanceMe(c);}
     else{mistakes++;tries++;const ans=c.answer;
       const extraW=got.find(w=>!ans.includes(w));
       const k=got.findIndex((w,j)=>w!==ans[j]);
@@ -510,25 +597,35 @@ function pickTurn(c){
   };n.querySelector("#op").appendChild(b);});
   return n;
 }
-function sayTurn(c){
-  const n=el(`<div class="turn"><p class="hint">Your turn · ${c.en} Say it out loud.</p>
-    <div class="sayit"><div>${c.ko}</div><small>${c.ro||rom(c.ko)}</small></div>
-    <div class="row"><button class="act alt" id="ls">▶ Hear it</button><button class="act alt" id="sp">● Speak</button></div><div id="nt"></div></div>`);
-  n.querySelector("#ls").onclick=()=>speak(c.ko);
-  const finish=how=>{S.track("speak_done",PLACES[pi].code,how);advanceMe(c);};
-  const fallback=msg=>{const nt=n.querySelector("#nt");nt.replaceChildren(el(`<div class="note info">${msg}</div>`));const b=el(`<button class="act" style="margin-top:8px;display:block;width:100%">I said it</button>`);b.onclick=()=>finish("self");nt.appendChild(b);};
-  n.querySelector("#sp").onclick=()=>{
+// ---------- speaking: hear, speak, check ----------
+const hangulOnly=t=>String(t).replace(/[^가-힣]/g,"");
+function lcs(a,b){let prev=new Array(b.length+1).fill(0);for(let i=1;i<=a.length;i++){const cur=[0];for(let j=1;j<=b.length;j++)cur[j]=a[i-1]===b[j-1]?prev[j-1]+1:Math.max(prev[j],cur[j-1]);prev=cur;}return prev[b.length];}
+function speechScore(heard,target){const t=hangulOnly(target),h=hangulOnly(heard);if(!t)return 1;if(!h)return 0;return lcs(t,h)/Math.max(t.length,h.length*0.85);}
+window.HC_SCORE=speechScore;
+function sayBlock(hint,ko,ro){return `<p class="hint">${hint}</p><div class="sayit"><div>${esc(ko)}</div>${ro?`<small>${esc(ro)}</small>`:""}</div>
+  <div class="row"><button class="act alt" data-ls>▶ Hear it</button><button class="act" data-sp>● Speak</button></div><div data-nt></div>`;}
+function speakBox(n,ko,done,code){
+  n.querySelector("[data-ls]").onclick=()=>speak(ko);
+  const nt=n.querySelector("[data-nt]");
+  const fallback=msg=>{nt.replaceChildren(el(`<div class="note info">${msg}</div>`));const b=el(`<button class="act" style="margin-top:8px;display:block;width:100%">I said it</button>`);b.onclick=()=>done("self");nt.appendChild(b);};
+  n.querySelector("[data-sp]").onclick=()=>{
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR){fallback("Your browser can't check speech. Say it out loud, then confirm. (Chrome on Android or a laptop can check it.)");return;}
-    try{const r=new SR();r.lang="ko-KR";
-      r.onresult=e=>{const h=e.results[0][0].transcript;const norm=s=>s.replace(/[\s~.!?,]/g,"");
-        if(norm(h).includes(norm(c.ko)))finish("recognized");
-        else{S.track("speak_miss",PLACES[pi].code,h);n.querySelector("#nt").replaceChildren(el(`<div class="note bad">Heard “${esc(h)}”. Try once more, slower.</div>`));
-          const b=el(`<button class="back" style="margin-top:6px">Skip, I said it</button>`);b.onclick=()=>finish("self_after_miss");n.querySelector("#nt").appendChild(b);}};
+    try{const r=new SR();r.lang="ko-KR";r.maxAlternatives=3;
+      r.onresult=e=>{const alts=[...e.results[0]].map(x=>x.transcript);let best=-1,h=alts[0];alts.forEach(t=>{const sc=speechScore(t,ko);if(sc>best){best=sc;h=t;}});
+        if(best>=0.75){S.track("speak_score",code,Math.round(best*100));done("recognized");}
+        else{S.track("speak_miss",code,h);
+          nt.replaceChildren(el(`<div class="note bad fb"><b>Heard:</b> “${esc(h)}”<span class="fb-tip"><b>How to fix it:</b> ${best>=.4?"Close! Say the whole sentence in one go, a little slower.":"Tap ▶ Hear it, then copy it piece by piece using the romanization."}</span></div>`));
+          const b=el(`<button class="back" style="margin-top:6px">Skip, I said it</button>`);b.onclick=()=>done("self_after_miss");nt.appendChild(b);}};
       r.onerror=()=>fallback("Couldn't use the microphone. Say it out loud, then confirm.");
-      r.start();n.querySelector("#nt").replaceChildren(el(`<div class="note info">Listening…</div>`));
+      r.start();nt.replaceChildren(el(`<div class="note info">Listening… say the whole sentence.</div>`));
     }catch(e){fallback("Couldn't use the microphone. Say it out loud, then confirm.");}
   };
+}
+function sayTurn(c){
+  const long=hangulOnly(c.ko).length>13, code=PLACES[pi].code;
+  const n=el(`<div class="turn">${sayBlock(`Your turn · ${c.en}${long?" It's a longer one, so listen first.":" Say it out loud."}`,c.ko,cfg().noTranslate?"":(c.ro||rom(c.ko)))}</div>`);
+  speakBox(n,c.ko,how=>{S.track("speak_done",code,how);advanceMe(c);},code);
   return n;
 }
 
@@ -563,10 +660,11 @@ function startReview(){
   const p=PLACES[pi];
   const pool=window.HC_ITEMS();
   const weight=x=>(P.wrong[x.id]||0)*2+Math.random();
-  const curItems=itemsOf(p).sort((a,b)=>weight(b)-weight(a));
-  const earlier=PLACES.slice(0,pi).filter(x=>x.kind!=="basics"&&stateOf(x)==="done").flatMap(itemsOf).sort((a,b)=>weight(b)-weight(a));
-  const pickN=Math.min(4,earlier.length);
-  const chosen=[...curItems.slice(0,8-pickN),...earlier.slice(0,pickN)];
+  const covers=p.kind==="review"?p.covers:[p];
+  const earlier=PLACES.slice(0,pi).filter(x=>x.kind!=="basics"&&x.kind!=="review"&&!covers.includes(x)&&stateOf(x)==="done").flatMap(itemsOf).sort((a,b)=>weight(b)-weight(a));
+  const pickN=Math.min(2,earlier.length), per=Math.ceil((8-pickN)/covers.length);
+  const curItems=covers.flatMap(c=>itemsOf(c).sort((a,b)=>weight(b)-weight(a)).slice(0,per)).slice(0,8-pickN);
+  const chosen=[...curItems,...earlier.slice(0,pickN)];
   const nopts=cfg().opts<3?3:4;
   RQ=shuffle(chosen).map(it=>makeQuestion(it,pool,nopts));rqi=0;rscore=0;ranswered=false;
   S.track("quiz_start",p.code,`${RQ.length}:${pickN} earlier`);
@@ -614,17 +712,143 @@ function reviewResult(){
   const p=PLACES[pi], need=Math.ceil(RQ.length*0.7), pass=rscore>=need;
   S.track("quiz_done",p.code,`${rscore}/${RQ.length}:${pass?"pass":"fail"}`);
   let next=null;
-  if(pass){const fresh=stateOf(p)!=="done";setState(p,"done");next=unlockNext(p);save();if(fresh&&next)setTimeout(()=>toast(`${p.ko} cleared! ${next.ko} (${next.en}) is now unlocked.`),400);}
-  const v=sceneShell(p,`<div class="ticket ${pass?"stamped":""}"><div class="stub"><span>REVIEW QUIZ · ${p.ko}</span><span>${pass?"PASSED":"TRY AGAIN"}</span></div>
+  if(pass){const fresh=stateOf(p)!=="done";setState(p,"done");next=unlockNext(p);save();if(fresh&&next)setTimeout(()=>toast(`${p.ko} passed! ${next.ko} (${next.en}) is now unlocked.`),400);}
+  const nx=PLACES[PLACES.indexOf(p)+1];
+  const v=sceneShell(p,`<div class="ticket ${pass?"stamped":""}"><div class="stub"><span>🚏 ${p.ko}</span><span>${pass?"PASSED":"TRY AGAIN"}</span></div>
     <div class="body"><h2>${rscore} / ${RQ.length} correct</h2>
-    <p>${pass?"Great memory. Now try it in real life.":`You need ${need} to pass. Questions you missed come back more often.`}</p>
-    <div class="row">${pass?`<button class="act" id="tomission">Real-life mission</button>`:`<button class="act" id="retry">New quiz</button><button class="act alt" id="repr">Practice again</button>`}</div></div></div>`);
+    <p>${pass?(nx?`Great memory. ${nx.ko} (${nx.en}) is open now.`:`Great memory. You finished every place in ${city().en}!`):`You need ${need} to pass. Questions you missed come back more often. Replaying ${p.covers.map(c=>c.ko).join(" or ")} helps.`}</p>
+    <div class="row">${pass?`<button class="act" id="home">Back to the map</button>`:`<button class="act" id="retry">New quiz</button><button class="act alt" id="home">Back to the map</button>`}</div></div></div>`);
   app.replaceChildren(v);wireBack();
   say(pass?"잘했어요!":"괜찮아요, 다시 해 봐요!",pass?"Well done!":"It's okay, let's try again!");
   const q=id=>document.getElementById(id);
-  if(q("tomission"))q("tomission").onclick=()=>{missionStage="ticket";go("missionView");};
   if(q("retry"))q("retry").onclick=()=>startReview();
-  if(q("repr"))q("repr").onclick=()=>startPractice();
+  if(q("home"))q("home").onclick=()=>go("map");
+}
+
+// ---------- place cleared (after the conversation) ----------
+function cleared(){
+  const p=PLACES[pi], fresh=stateOf(p)!=="done";
+  if(fresh)setState(p,"done");
+  unlockNext(p);save();
+  const i=PLACES.indexOf(p), nx=PLACES[i+1], after=PLACES[i+2];
+  let msg;
+  if(nx&&nx.kind==="review")msg=stateOf(nx)==="done"?`${nx.ko} is already passed. ${after?`${after.ko} (${after.en}) is open.`:""}`:`🚏 <b>${nx.ko} is now open.</b> 8 quick questions on ${nx.covers.map(c=>c.ko).join(" and ")}. Pass 6 to unlock ${after?`${after.ko} (${after.en})`:"the next city"}.`;
+  else if(nx)msg=`${nx.ko} (${nx.en}) is unlocked.${after&&after.kind==="review"?` After it comes 🚏 ${after.ko}, a short quiz on both places.`:""}`;
+  else msg="That was the last place here.";
+  const words=p.words||[];
+  const v=sceneShell(p,`<div class="ticket stamped"><div class="stub"><span>PLACE CLEARED · ${p.ko}</span><span>${mistakes?`${mistakes} SLIP${mistakes>1?"S":""}`:"PERFECT"}</span></div>
+    <div class="body"><h2>${mistakes?"Nice work!":"Perfect conversation!"}</h2><p>${msg}</p>
+    ${fresh&&words.length?`<div class="newcards"><span>+${words.length} word cards</span><b>${words.map(w=>w.emo).join(" ")}</b></div>`:""}
+    <div class="row"><button class="act" id="tomission">Real-life mission</button>${nx&&nx.kind==="review"&&stateOf(nx)==="open"?`<button class="act alt" id="tostation">Start review now</button>`:""}</div>
+    <button class="back" id="home" style="align-self:center">Back to the map</button></div></div>`);
+  app.replaceChildren(v);wireBack();react("happy");
+  say(mistakes?"잘했어요!":"완벽해요!",mistakes?"Well done!":"Perfect!");
+  if(fresh)S.track("place_done",p.code,mistakes);
+  const q=id=>document.getElementById(id);
+  q("tomission").onclick=()=>{missionStage="ticket";go("missionView");};
+  if(q("tostation"))q("tostation").onclick=()=>{pi=i+1;S.track("station_start",nx.code,"after_place");startReview();};
+  q("home").onclick=()=>go("map");
+}
+
+// ---------- word cards ----------
+const allWords=()=>CITIES.filter(c=>!c.soon).flatMap(c=>c.places).filter((p,i,a)=>a.indexOf(p)===i).flatMap(p=>(p.words||[]).map((w,k)=>({...w,id:`${p.code}:${k}`,place:p})));
+function myWords(){return allWords().filter(w=>stateOf(w.place)==="done");}
+let WD=[], wi=0, wscore=0, wmode="write", wtries=0, whint=0, wtyped="";
+function words(){
+  const all=allWords(), mine=new Set(myWords().map(w=>w.id));
+  const enough=mine.size>=4;
+  const v=el(`<div class="col">
+    <div class="topbar"><button class="back" id="back">← Map</button><span class="where">단어 카드 · Word cards</span></div>
+    <div class="hero"><h1>${mine.size}<span class="en-title"> / ${all.length} cards</span></h1>
+      <p>Every place you clear gives you its key words. Play to name each picture in Korean: write it or say it.</p></div>
+    <div class="panel">${enough?`<button class="act" id="play">Play ${Math.min(10,mine.size)} cards</button>`:`<div class="note info">Clear ${mine.size?"one more place":"your first place"} to start playing. You need at least 4 cards.</div>`}</div>
+    <div class="cardgrid">${all.map(w=>mine.has(w.id)?`<div class="wcard"><span class="emo">${w.emo}</span><b>${w.ko}</b><small>${esc(w.en)}</small></div>`
+      :`<div class="wcard off"><span class="emo">?</span><small>${w.place.ko}</small></div>`).join("")}</div></div>`);
+  app.replaceChildren(v);
+  document.getElementById("back").onclick=()=>go("map");
+  const pl=document.getElementById("play");
+  if(pl)pl.onclick=()=>{const weight=w=>(P.wrong["w:"+w.id]||0)*2+Math.random();
+    WD=myWords().sort((a,b)=>weight(b)-weight(a)).slice(0,10);WD=shuffle(WD).map(w=>({...w,again:false}));wi=0;wscore=0;wtries=0;whint=cfg().autoEn?1:0;wtyped="";
+    S.track("words_start","",WD.length);go("wordplay");};
+}
+function wordplay(){
+  if(wi>=WD.length){
+    const total=WD.filter(w=>!w.again).length;
+    const v=el(`<div class="col"><div class="ticket stamped"><div class="stub"><span>단어 카드 · WORD CARDS</span><span>DONE</span></div>
+      <div class="body"><h2>${wscore} / ${total} named on the first try</h2><p>Cards you missed come back more often next time.</p>
+      <div class="row"><button class="act" id="again">Play again</button><button class="act alt" id="coll">My cards</button></div>
+      <button class="back" id="home" style="align-self:center">Back to the map</button></div></div></div>`);
+    app.replaceChildren(v);S.track("words_done","",`${wscore}/${total}`);
+    document.getElementById("again").onclick=()=>{go("words");setTimeout(()=>{const b=document.getElementById("play");b&&b.click();},0);};
+    document.getElementById("coll").onclick=()=>go("words");document.getElementById("home").onclick=()=>go("map");return;
+  }
+  const w=WD[wi], others=allWords().filter(x=>x.ko!==w.ko);
+  const syl=[...w.ko];
+  const decoys=shuffle([...new Set(others.flatMap(x=>[...x.ko]))].filter(c=>!syl.includes(c))).slice(0,Math.max(2,4-syl.length));
+  const tiles=shuffle([...syl,...decoys]);
+  const v=el(`<div class="col">
+    <div class="topbar"><button class="back" id="back">← Cards</button><span class="where">Card ${wi+1} of ${WD.length}${w.again?" · again":""}</span></div>
+    <div class="progress"><i style="width:${100*wi/WD.length}%"></i></div>
+    <div class="flash"><span class="emo">${w.emo}</span>${whint?`<span class="fhint">${esc(w.en)}${whint>1?` · starts with ${syl[0]}`:""}</span>`:""}</div>
+    <div class="turn">
+      <p class="hint">What is this in Korean?</p>
+      ${seg("wm",[["write","✍️ Write"],["speak","🎤 Speak"]])}
+      <div id="wbox"></div><div id="nt"></div>
+      <div class="row"><button class="act alt" id="hint">${whint>=2?"No more hints":"Hint"}</button><button class="act alt" id="idk">Show me</button></div>
+    </div></div>`);
+  app.replaceChildren(v);
+  v.querySelectorAll(".seg [data-v]").forEach(b=>{b.setAttribute("aria-pressed",b.dataset.v===wmode?"true":"false");b.onclick=()=>{wmode=b.dataset.v;wordplay();};});
+  document.getElementById("back").onclick=()=>go("words");
+  const nt=document.getElementById("nt"), box=document.getElementById("wbox");
+  let done=false;
+  const finish=(ok,how)=>{if(done)return;done=true;
+    const first=!w.again&&wtries===0;
+    P.wrong["w:"+w.id]=Math.max(0,(P.wrong["w:"+w.id]||0)+(ok&&first?-1:1));save();
+    S.track("word_answer",w.place.code,`${w.ko}:${ok?1:0}:${how}`);
+    if(ok&&first)wscore++;
+    if(!ok&&!w.again)WD.push({...w,again:true});
+    speak(w.ko);
+    nt.replaceChildren(el(ok?`<div class="note ok">✓ ${w.ko} <span class="small">(${rom(w.ko)}) · ${esc(w.en)}</span></div>`:`<div class="note bad fb"><b>The answer:</b> ${w.ko} (${rom(w.ko)}) · ${esc(w.en)}<span class="fb-tip"><b>How to remember it:</b> you learned it at ${w.place.ko}. This card comes back at the end of the round.</span></div>`));
+    const nb=el(`<button class="act" style="display:block;width:100%;margin-top:8px">${wi===WD.length-1?"Finish":"Next card"}</button>`);
+    nb.onclick=()=>{wi++;wtries=0;whint=cfg().autoEn?1:0;wtyped="";wordplay();};nt.appendChild(nb);nb.focus({preventScroll:true});
+    v.querySelectorAll("#wbox button,#wbox input,#hint,#idk").forEach(x=>x.disabled=true);};
+  const wrongTry=(why,tip)=>{wtries++;react("confused");
+    if(wtries>=3){finish(false,"gave_up");return;}
+    nt.replaceChildren(fbNote(why,tip+(wtries===2?` Hint: it starts with “${syl[0]}”.`:"")));};
+  if(wmode==="write"){
+    box.innerHTML=`<input id="wi" class="winput" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type in Korean" value="${esc(wtyped)}">
+      <p class="small">No Korean keyboard? Tap the blocks:</p>
+      <div class="bank">${tiles.map(t=>`<button class="tile" data-t="${t}">${t}</button>`).join("")}<button class="tile" data-del>⌫</button></div>
+      <button class="act" id="chk">Check</button>`;
+    const inp=document.getElementById("wi");
+    inp.oninput=()=>{wtyped=inp.value;};
+    box.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{inp.value+=b.dataset.t;wtyped=inp.value;});
+    box.querySelector("[data-del]").onclick=()=>{inp.value=[...inp.value].slice(0,-1).join("");wtyped=inp.value;};
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("chk").click();});
+    document.getElementById("chk").onclick=()=>{const a=inp.value.replace(/\s/g,"");if(!a)return;
+      if(a===w.ko.replace(/\s/g,"")){finish(true,"write");return;}
+      const m=allWords().find(x=>x.ko===a);
+      if(m)wrongTry(`“${a}” means “${m.en}” ${m.emo}.`,"Look at the picture again.");
+      else if(/[a-z]/i.test(a))wrongTry("That's in English letters.","Write it in Hangul. Use the blocks below if you don't have a Korean keyboard.");
+      else if(a.length!==syl.length)wrongTry(`“${a}” has ${a.length} block${a.length>1?"s":""}. The word has ${syl.length}.`,"Count the syllable blocks and try again.");
+      else{const k=[...a].findIndex((c,j)=>c!==syl[j]);wrongTry(`Close, but block ${k+1} (“${[...a][k]}”) is off.`,`Read it out loud: ${rom(a)}. Does that sound like the thing in the picture?`);}
+      inp.value="";wtyped="";};
+  }else{
+    box.innerHTML=`<button class="act" data-sp2>● Speak</button><div data-nt2></div>`;
+    box.querySelector("[data-sp2]").onclick=()=>{
+      const SR=window.SpeechRecognition||window.webkitSpeechRecognition, n2=box.querySelector("[data-nt2]");
+      if(!SR){n2.replaceChildren(el(`<div class="note info">Your browser can't check speech. Use ✍️ Write, or try Chrome.</div>`));return;}
+      try{const r=new SR();r.lang="ko-KR";r.maxAlternatives=5;
+        r.onresult=e=>{const alts=[...e.results[0]].map(x=>x.transcript);
+          if(alts.some(t=>hangulOnly(t).includes(hangulOnly(w.ko))))finish(true,"speak");
+          else wrongTry(`Heard “${esc(alts[0])}”.`,"Say just the word, clearly. Tap Hint if you're not sure.");};
+        r.onerror=()=>n2.replaceChildren(el(`<div class="note info">Couldn't use the microphone. Try ✍️ Write.</div>`));
+        r.start();n2.replaceChildren(el(`<div class="note info">Listening…</div>`));
+      }catch(e){n2.replaceChildren(el(`<div class="note info">Couldn't use the microphone. Try ✍️ Write.</div>`));}
+    };
+  }
+  document.getElementById("hint").onclick=()=>{if(whint<2){whint++;S.track("word_hint",w.place.code,w.ko);wordplay();}};
+  document.getElementById("idk").onclick=()=>finish(false,"show");
 }
 
 // ---------- real-life mission ----------
@@ -652,6 +876,22 @@ function missionView(){
   v.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{
     S.track("mission_done",p.code,b.dataset.r+(away?":away":""));missionStage="ticket";if(!P.missions.includes(p.code))P.missions.push(p.code);save();render();});
   if(q("home"))q("home").onclick=()=>go("map");
+}
+
+// ---------- self-introduction ----------
+const COUNTRY_KO={uzbekistan:"우즈베키스탄",vietnam:"베트남","viet nam":"베트남",china:"중국",japan:"일본",mongolia:"몽골",russia:"러시아",kazakhstan:"카자흐스탄",kyrgyzstan:"키르기스스탄",tajikistan:"타지키스탄",turkmenistan:"투르크메니스탄",
+  indonesia:"인도네시아",india:"인도",nepal:"네팔",pakistan:"파키스탄",bangladesh:"방글라데시","sri lanka":"스리랑카",myanmar:"미얀마",cambodia:"캄보디아",thailand:"태국",philippines:"필리핀",malaysia:"말레이시아",laos:"라오스",
+  usa:"미국",us:"미국","united states":"미국",america:"미국",canada:"캐나다",mexico:"멕시코",brazil:"브라질",uk:"영국","united kingdom":"영국",england:"영국",france:"프랑스",germany:"독일",spain:"스페인",italy:"이탈리아",
+  netherlands:"네덜란드",poland:"폴란드",ukraine:"우크라이나",turkey:"튀르키예","türkiye":"튀르키예",egypt:"이집트",nigeria:"나이지리아",kenya:"케냐",morocco:"모로코",australia:"호주","new zealand":"뉴질랜드",
+  taiwan:"대만","hong kong":"홍콩",singapore:"싱가포르",iran:"이란","saudi arabia":"사우디아라비아",azerbaijan:"아제르바이잔",sweden:"스웨덴",norway:"노르웨이",finland:"핀란드",colombia:"콜롬비아",peru:"페루",chile:"칠레",argentina:"아르헨티나"};
+function koCountry(c){c=String(c||"").trim();if(/[가-힣]/.test(c))return c;return COUNTRY_KO[c.toLowerCase()]||"";}
+function introSentence(){
+  const nick=profile.nick||"";let end="이에요";
+  const last=nick.slice(-1);
+  if(/[가-힣]/.test(last))end=((last.charCodeAt(0)-0xAC00)%28)?"이에요":"예요";
+  else if(/[aeiouy]$/i.test(nick))end="예요";
+  const c=koCountry(profile.country);
+  return `안녕하세요. 저는 ${nick}${end}. ${c?`${c}에서 왔어요. `:""}만나서 반가워요!`;
 }
 
 // ---------- 한글 학교 (basics) ----------
@@ -729,9 +969,16 @@ function unitView(){
     if(q.speak&&/[가-힣]/.test(o))return [`“${o}” reads “${rom(o)}”. The word you heard is different.`,`Play it again. It sounds like “${rom(q.speak)}”.`];
     return ["That's not the one.","Look at the teaching cards again, then try another option."];
   }
+  if(q.type==="say"){
+    const sent=introSentence();
+    box.innerHTML=sayBlock(`${q.prompt} It uses your nickname${koCountry(profile.country)?" and country":""}.`,sent,rom(sent));
+    say("자기소개 해 볼까요?","Shall we introduce ourselves?");
+    speakBox(box,sent,how=>{S.track("basics_say",p.code,how);right();},p.code);
+    return;
+  }
   if(q.type==="pick"){
     box.innerHTML=`${q.speak?`<p class="hint">${q.prompt}</p><button class="act alt" id="play" style="display:block">▶ Play again</button>`:`<p class="hint">${/[가-힣ㄱ-ㅣ0-9]/.test(q.prompt)&&q.prompt.length<12?"What is this?":"Which one fits?"}</p><div class="${q.prompt.length<12?"bigglyph":"qtext"}">${q.prompt}</div>`}<div class="opts grid2opts" id="op"></div>`;
-    say(q.speak?"잘 들어 보세요.":"이거 뭐예요?",q.speak?"Listen carefully.":"What's this?");
+    say(q.speak?"잘 들어 보세요.":"정답은 무엇일까요?",q.speak?"Listen carefully.":"What's the answer?");
     if(q.speak){setTimeout(()=>speak(q.speak),900);document.getElementById("play").onclick=()=>speak(q.speak);}
     shuffle(q.options.map((o,i)=>i)).forEach(i=>{const b=el(`<button class="opt">${q.options[i]}</button>`);
       b.onclick=()=>{if(i===q.answer){b.classList.add("right");if(/[가-힣]/.test(q.options[i]))speak(q.options[i]);right();}else{b.classList.add("wrong");b.disabled=true;const [w,t]=explain(i);wrong(w,t);}};
@@ -769,7 +1016,7 @@ function rooms(){
 function go(v){view=v;render();window.scrollTo({top:0});}
 function render(){
   clearInterval(typeTimer);clearInterval(turnTimer);
-  ({welcome,placeIntro,placement,survey,map:mapView,intro,learn,practice,review,missionView,units:unitsView,unit:unitView,rooms})[view]();
+  ({welcome,placeIntro,placement,survey,map:mapView,intro,learn,practice,review,cleared,words,wordplay,missionView,units:unitsView,unit:unitView,rooms})[view]();
 }
 render();
 })();
