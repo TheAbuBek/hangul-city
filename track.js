@@ -26,12 +26,14 @@
     sending=false;
     if(queue.length) setTimeout(flush,backoff);
   }
+  // Open the app once with ?team on a group member's phone to stop recording that phone (?notteam to undo).
+  try{const q=location.search;if(/[?&]team\b/.test(q))store.set("hc_team",true);if(/[?&]notteam\b/.test(q))store.set("hc_team",false);}catch(e){}
   window.SSK={
     store, uid,
     track(event,place="",detail=""){
       const p=store.get("ssk_profile",{});
       const row={t:new Date().toISOString(),uid:uid(),nick:p.nick||"",event,place,detail:String(detail),country:p.country||"",level:p.level||"",months:p.months||""};
-      queue.push(row);store.set("ssk_queue",queue);
+      if(!store.get("hc_team",false)){queue.push(row);store.set("ssk_queue",queue);} // team devices are never recorded
       const log=store.get("ssk_log",[]);log.push(row);store.set("ssk_log",log.slice(-500));
       flush();
     },

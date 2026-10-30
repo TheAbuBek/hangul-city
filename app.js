@@ -379,7 +379,7 @@ function mapView(){
       ${nodes}</svg></div>
     <div class="panel">${armReset?`<p style="margin:0;font-weight:700">Reset all progress in every city?</p><div class="row"><button class="act" id="resetyes">Yes, reset</button><button class="act alt" id="resetno">Cancel</button></div>`
       :`<div class="row"><button class="act alt" id="retest">Retake level check</button><button class="act alt" id="reset">Reset progress</button></div>`}</div>
-    <div class="foot"><span>Hangul City · a 영어와컴퓨터 class project</span></div>
+    <div class="foot"><span>Hangul City · a 영어와컴퓨터 class project</span>${store.get("hc_team",false)?`<span>Team device · not recorded</span>`:""}</div>
   </div>`);
   app.replaceChildren(v);
   v.querySelectorAll(".bld").forEach(g=>{
