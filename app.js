@@ -131,9 +131,37 @@ function welcome(){
 }
 
 // ---------- placement test ----------
+// Situational pre/post test (v2): 10 real-life situations. Forms A and B use the same 10 situations with
+// different details, so the post-test is not a repeat. Correct option is always index 0 (shuffled on screen).
+// k: say = choose what to say, understand = what a Korean person means, listen = audio only.
+const TEST_FORMS={
+ A:[
+  {k:"say",place:"편의점",prompt:"Convenience store. The clerk asks: <b class=\"qko\">봉투 필요하세요?</b> You don't need a bag.",q:"What do you say?",options:["아뇨, 괜찮아요","봉투가 필요하지 않습니다","싫어요","네, 주세요"],tip:"아뇨, 괜찮아요 (no, it's okay) is the natural way to refuse. The textbook sentence sounds stiff, 싫어요 sounds rude, and 네, 주세요 means yes."},
+  {k:"understand",place:"편의점",prompt:"You buy a lunch box. The clerk asks: <b class=\"qko\">데워 드릴까요?</b>",q:"What does she mean?",options:["Shall I heat it up?","Do you need chopsticks?","Will you pay by card?","Is that everything?"],tip:"데우다 means to heat up. Clerks ask this for 도시락 and 삼각김밥."},
+  {k:"say",place:"식당",prompt:"Restaurant door. Staff ask: <b class=\"qko\">몇 분이세요?</b> You are two people.",q:"What do you say?",options:["두 명이요","이 명이요","두 시요","둘 개요"],tip:"Count people with native numbers: 한, 두, 세 + 명. 이 명 uses the wrong number set, and 두 시 means 2 o'clock."},
+  {k:"say",place:"식당",prompt:"You order 김치찌개 but can't handle spicy food.",q:"What do you say?",options:["덜 맵게 해 주세요","더 맵게 해 주세요","안 매워요?","맵게 먹어요"],tip:"덜 = less, 더 = more. ○○ 해 주세요 asks someone to make it that way."},
+  {k:"say",place:"버스",prompt:"Getting on a bus, you want to check it goes to 강남역.",q:"What do you ask the driver?",options:["기사님, 이거 강남역 가요?","야, 강남역 가?","본 버스는 강남역으로 운행합니까?","강남역이에요?"],tip:"기사님 + a short -요 question is natural. 야 is rude, the long form sounds like an announcement, and 강남역이에요? asks if you are already there."},
+  {k:"listen",place:"버스",listen:"다음 정류장에서 내리세요",prompt:"On the bus, a passenger tells you something.",q:"What did they say?",options:["Get off at the next stop","Get on at the next stop","The next stop is closed","Don't get off yet"],tip:"내리다 = get off, 타다 = get on. 다음 정류장 = the next stop."},
+  {k:"understand",place:"대학교",prompt:"You walk into the department office. The assistant says: <b class=\"qko\">어떻게 오셨어요?</b>",q:"What does she mean?",options:["How can I help you?","How did you get here?","How are you?","Where are you from?"],tip:"Word for word it's 'how did you come?', but at offices and shops it means 'what brings you here?'"},
+  {k:"understand",place:"은행",prompt:"At the bank counter, the teller asks: <b class=\"qko\">신분증 있으세요?</b>",q:"What does she want?",options:["Your ID","Your bank card","Your phone number","Your waiting ticket"],tip:"신분증 = ID. For foreigners that's usually your residence card (외국인등록증) or passport."},
+  {k:"say",place:"병원",prompt:"Hospital reception. You need to explain that your throat hurts.",q:"What do you say?",options:["목이 아파요","머리가 아파요","목이 말라요","배가 아파요"],tip:"목 = throat, 아파요 = it hurts. 목이 말라요 means 'I'm thirsty', 머리 = head, 배 = stomach."},
+  {k:"listen",place:"편의점",listen:"만 오천 원이에요",prompt:"At the counter, the cashier tells you the total.",q:"How much is it?",options:["15,000 won","50,000 won","1,500 won","10,500 won"],tip:"만 = 10,000 and 천 = 1,000, so 만 오천 = 15,000."}],
+ B:[
+  {k:"say",place:"편의점",prompt:"Convenience store. The clerk asks: <b class=\"qko\">영수증 드릴까요?</b> You don't need the receipt.",q:"What do you say?",options:["아뇨, 괜찮아요","영수증이 필요하지 않습니다","싫어요","네, 주세요"],tip:"아뇨, 괜찮아요 (no, it's okay) is the natural way to refuse. The textbook sentence sounds stiff, 싫어요 sounds rude, and 네, 주세요 means yes."},
+  {k:"understand",place:"편의점",prompt:"You pay at the counter. The clerk asks: <b class=\"qko\">포인트 적립하세요?</b>",q:"What does she mean?",options:["Do you want to collect points?","Do you want a bag?","Will you pay in cash?","Do you want it heated?"],tip:"적립 = saving up points. Say 아뇨, 괜찮아요 if you have no membership."},
+  {k:"say",place:"식당",prompt:"Restaurant door. Staff ask: <b class=\"qko\">몇 분이세요?</b> You are three people.",q:"What do you say?",options:["세 명이요","삼 명이요","세 시요","셋 개요"],tip:"Count people with native numbers: 한, 두, 세 + 명. 삼 명 uses the wrong number set, and 세 시 means 3 o'clock."},
+  {k:"say",place:"식당",prompt:"Your water is finished and you want more.",q:"What do you say?",options:["물 좀 더 주세요","물 좀 덜 주세요","물 있어요","물 마셔요"],tip:"더 = more, 좀 makes it softer, 주세요 = please give me. 덜 means less."},
+  {k:"say",place:"버스",prompt:"Getting on a bus, you want to check it goes to 서울역.",q:"What do you ask the driver?",options:["기사님, 이거 서울역 가요?","야, 서울역 가?","본 버스는 서울역으로 운행합니까?","서울역이에요?"],tip:"기사님 + a short -요 question is natural. 야 is rude, the long form sounds like an announcement, and 서울역이에요? asks if you are already there."},
+  {k:"listen",place:"버스",listen:"세 정거장 더 가야 돼요",prompt:"You ask a passenger how far your stop is.",q:"What did they say?",options:["You need to go three more stops","Three buses go there","It takes three minutes","Get off at stop number three"],tip:"정거장 = stop, 세 = three, 더 가야 돼요 = you have to go further."},
+  {k:"understand",place:"병원",prompt:"At the clinic, the nurse asks: <b class=\"qko\">어디가 불편하세요?</b>",q:"What does she mean?",options:["What's bothering you?","Where is the restroom?","Are you comfortable?","Where do you live?"],tip:"불편하다 = uncomfortable. At a clinic it means 'what's wrong / where does it hurt?'"},
+  {k:"understand",place:"휴대폰",prompt:"At the phone shop, the staff ask: <b class=\"qko\">외국인등록증 있으세요?</b>",q:"What do they want?",options:["Your residence card","Your old phone","Your bank card","Your phone number"],tip:"외국인등록증 = residence card (ARC). You need it for phone plans and bank accounts."},
+  {k:"say",place:"병원",prompt:"Hospital reception. You need to explain that your stomach hurts.",q:"What do you say?",options:["배가 아파요","목이 아파요","배가 고파요","머리가 아파요"],tip:"배 = stomach, 아파요 = it hurts. 배가 고파요 means 'I'm hungry', 목 = throat, 머리 = head."},
+  {k:"listen",place:"편의점",listen:"이만 오천 원이에요",prompt:"At the counter, the cashier tells you the total.",q:"How much is it?",options:["25,000 won","20,500 won","2,500 won","52,000 won"],tip:"이만 = 20,000 and 오천 = 5,000, so 이만 오천 = 25,000."}]
+};
+// The first 8-question version, kept so people who took it are post-tested on the same kind of test.
 // Two matched forms of the level check. Each learner gets one as the pre-test and the other as the post-test
 // (counterbalanced), so the post-test is not the same questions a second time. Correct option is always index 0.
-const TEST_FORMS={
+const TEST_V1={
  A:[
   {k:"read",prompt:"버스",q:"What does this word mean?",options:["bus","beer","boss","bread"]},
   {k:"read",prompt:"커피",q:"What does this word mean?",options:["coffee","copy","cup","coupon"]},
@@ -153,13 +181,15 @@ const TEST_FORMS={
   {k:"meaning",prompt:"몇 분이세요?",q:"At a restaurant door, this means…",options:["How many people?","How many minutes?","What time is it?","Who are you?"]},
   {k:"listen",listen:"수건 하나 더 주세요",prompt:"Listen.",q:"What did you hear?",options:["One more towel, please","Two towels, please","Where is the towel?","No towel, thanks"]}]
 };
+const testVer=()=>(profile&&profile.testScore!=null&&!profile.testVer)?"v1":"v2";   // older users keep the 8-question test
+const formsFor=()=>testVer()==="v1"?TEST_V1:TEST_FORMS;
 const preForm=()=>(profile&&profile.form)||"A", postForm=()=>preForm()==="A"?"B":"A";
 let testMode="pre";
 let pq=0, pscore=0, porder=[];
 function placeIntro(){
   const v=el(`<div class="col">
     <div class="hero"><p class="label">Hi ${esc(profile.nick)}!</p><h1>Quick level check</h1>
-      <p>8 short questions, about 2 minutes. Your answers decide where you start on the map and how much help you get.</p>
+      <p>10 everyday situations, about 3 minutes. Choose what you would say or what the person means. "I don't know" is fine. Your answers decide where you start on the map.</p>
       <div class="hero-chars"><div><img class="mascot" src="img/mascot.png" alt=""></div></div></div>
     <div class="panel"><button class="act" id="go">Take the test</button>
       <button class="act alt" id="beg">I'm a beginner, skip the test</button></div></div>`);
@@ -173,14 +203,14 @@ function placement(){
     <div class="topbar"><span class="label">${testMode==="post"?"Progress check":"Level check"} · ${pq+1} of ${porder.length}</span><button class="back" id="quit" style="flex:none">${testMode==="post"?"Later":"Skip test"}</button></div>
     <div class="progress"><i style="width:${100*pq/porder.length}%"></i></div>
     <div class="panel">
-      ${q.listen?`<button class="act alt" id="play">▶ Play the sentence</button>`:`<div class="${q.prompt.length<10?"bigglyph":"qtext"}">${q.prompt}</div>`}
+      ${q.listen?`${q.k==="listen"?`<div class="qtext">${q.prompt}</div>`:""}<button class="act alt" id="play">▶ Play the sentence</button>`:`<div class="${q.prompt.length<10?"bigglyph":"qtext"}">${q.prompt}</div>`}
       <p class="hint">${q.q}</p>
       <div class="opts">${q.order.map(i=>`<button class="opt" data-i="${i}">${q.options[i]}</button>`).join("")}</div>
       <button class="back" id="idk" style="align-self:center">I don't know</button>
     </div></div>`);
   app.replaceChildren(v);
   if(q.listen){setTimeout(()=>speak(q.listen),400);document.getElementById("play").onclick=()=>speak(q.listen);}
-  const next=(ok,chosen)=>{q.chosen=chosen;q.ok=ok;if(ok)pscore++;S.track(testMode==="post"?"posttest_q":"placement_q","",q.k+":"+(ok?1:0));pq++;if(pq>=porder.length)(testMode==="post"?finishPost():finishPlacement());else render();};
+  const next=(ok,chosen)=>{q.chosen=chosen;q.ok=ok;if(ok)pscore++;S.track(testMode==="post"?"posttest_q":"placement_q","",q.k+":"+(ok?1:0)+(q.tip?":v2":""));pq++;if(pq>=porder.length)(testMode==="post"?finishPost():finishPlacement());else render();};
   v.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>next(+b.dataset.i===0,q.options[+b.dataset.i]));
   document.getElementById("idk").onclick=()=>next(false,null);
   document.getElementById("quit").onclick=()=>{if(testMode==="post"){S.track("posttest_later","","at "+pq);postSnooze=true;go("map");return;}S.track("placement_skip","","quit at "+pq);applyLevel("beginner",null);go("map");};
@@ -191,16 +221,17 @@ function mistakesReview(){
   return `<details class="history"><summary>Review your mistakes (${miss.length})</summary><div class="hist">${miss.map(q=>`<div class="revq">
     <p><b>${q.listen?`(audio) ${q.listen}`:q.prompt}</b><br><span class="small">${q.q}</span></p>
     <p>Your answer: ${q.chosen?esc(q.chosen):"I don't know"}<br>Correct: <b>${q.options[0]}</b>${/[가-힣]/.test(q.options[0])?` <span class="small">(${rom(q.options[0])})</span>`:""}</p>
-    <p class="small">${q.k==="num"?"Sino numbers (일, 이, 삼) for money and floors; native numbers (하나, 둘, 셋) for people and hours.":q.k==="polite"?"With staff, short polite -요 forms sound natural. Textbook forms sound stiff, and 반말 sounds rude.":q.k==="read"?"Read block by block; many words come from English.":q.k==="listen"?"Listen for the first word of the sentence.":"Some everyday phrases don't translate word for word."}</p></div>`).join("")}</div></details>`;
+    <p class="small">${q.tip?q.tip:q.k==="num"?"Sino numbers (일, 이, 삼) for money and floors; native numbers (하나, 둘, 셋) for people and hours.":q.k==="polite"?"With staff, short polite -요 forms sound natural. Textbook forms sound stiff, and 반말 sounds rude.":q.k==="read"?"Read block by block; many words come from English.":q.k==="listen"?"Listen for the first word of the sentence.":"Some everyday phrases don't translate word for word."}</p></div>`).join("")}</div></details>`;
 }
 function finishPlacement(){
-  const lvl=pscore>=7?"advanced":pscore>=4?"intermediate":"beginner";
+  const N=porder.length, lvl=pscore>=Math.ceil(N*0.8)?"advanced":pscore>=Math.ceil(N*0.5)?"intermediate":"beginner";
   const txt={beginner:"You'll start at 한글 학교 with romanization and translations shown.",intermediate:"You can read Korean, so 한글 학교 is skipped. Translations are hidden until you tap.",advanced:"The first three Seoul places are open, there are no hints, and your answers are timed."}[lvl];
-  const v=el(`<div class="col"><div class="hero"><p class="label">Your result</p><h1>${pscore}/8 · ${LEVEL[lvl].name}</h1><p>${txt}</p></div>
+  const v=el(`<div class="col"><div class="hero"><p class="label">Your result</p><h1>${pscore}/${N} · ${LEVEL[lvl].name}</h1><p>${txt}</p></div>
     <div class="panel">${mistakesReview()}<button class="act" id="ok">Go to the map</button>
     <p class="small">Feels wrong? Pick your level yourself:</p>${seg("lv",[["beginner","Beginner"],["intermediate","Intermediate"],["advanced","Advanced"]])}</div></div>`);
   app.replaceChildren(v);
-  S.track("placement","",`${pscore}/8:${lvl}:${preForm()}`);
+  profile.testVer="v2";store.set("ssk_profile",profile);
+  S.track("placement","",`${pscore}/${N}:${lvl}:${preForm()}:v2`);
   let chosen=lvl;
   v.querySelectorAll("[data-v]").forEach(b=>{if(b.dataset.v===lvl)b.setAttribute("aria-pressed","true");
     b.onclick=()=>{v.querySelectorAll("[data-v]").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");chosen=b.dataset.v;};});
@@ -220,15 +251,16 @@ function surveyDue(){
   if(/survey/.test(location.search))return true;
   return clearedCount()>=2;
 }
-function startPost(){testMode="post";pq=0;pscore=0;porder=TEST_FORMS[postForm()].map(q=>({...q,order:shuffle(q.options.map((_,i)=>i))}));S.track("posttest_start","",postForm());go("placement");}
+function startPost(){testMode="post";pq=0;pscore=0;porder=formsFor()[postForm()].map(q=>({...q,order:shuffle(q.options.map((_,i)=>i))}));S.track("posttest_start","",postForm());go("placement");}
 function finishPost(){
   const pre=(profile.testScore==null)?null:profile.testScore;
   profile.postDone=true;profile.postScore=pscore;store.set("ssk_profile",profile);
-  S.track("posttest","",`${pscore}/8:pre=${pre==null?"none":pre}:${postForm()}`);
+  const N=porder.length;
+  S.track("posttest","",`${pscore}/${N}:pre=${pre==null?"none":pre}:${postForm()}:${testVer()}`);
   const diff=pre==null?null:pscore-pre;
   const v=el(`<div class="col"><div class="hero"><p class="label">Progress check</p>
-      <h1>${pscore}/8</h1>
-      <p>${pre==null?"You skipped the first level check, so there's nothing to compare with. Thanks, this still helps.":diff>0?`Up ${diff} from your first check (${pre}/8). Your practice is working.`:diff===0?`Same as your first check (${pre}/8). Keep going, the review quizzes help most.`:`Your first check was ${pre}/8. A different set of questions can be harder, keep practising.`}</p>
+      <h1>${pscore}/${N}</h1>
+      <p>${pre==null?"You skipped the first level check, so there's nothing to compare with. Thanks, this still helps.":diff>0?`Up ${diff} from your first check (${pre}/${N}). Your practice is working.`:diff===0?`Same as your first check (${pre}/${N}). Keep going, the review quizzes help most.`:`Your first check was ${pre}/${N}. A different set of questions can be harder, keep practising.`}</p>
       <div class="hero-chars"><div><img class="mascot" src="img/mascot.png" alt=""></div></div></div>
     <div class="panel">${mistakesReview()}<button class="act" id="ok">Back to the map</button></div></div>`);
   app.replaceChildren(v);document.getElementById("ok").onclick=()=>go("map");

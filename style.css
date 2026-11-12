@@ -371,3 +371,5 @@ button{font:inherit;color:inherit}
 .ios-steps{margin:0;padding-left:20px;text-align:left;align-self:stretch;color:var(--ink);font-size:14px;line-height:1.7}
 .ios-ico{display:inline-block;border:1.5px solid var(--line);border-radius:6px;padding:0 5px;font-size:12px}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .25s ease-out}@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}}
+
+.qko{display:block;font-size:22px;margin:8px 0 2px;word-break:keep-all}
