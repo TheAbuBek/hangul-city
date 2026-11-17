@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="style.css?v=11171440">
+<link rel="stylesheet" href="style.css?v=11171500">
 <style>
 .wide{max-width:880px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
@@ -44,9 +44,9 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
   <div id="status" class="note info">Loading…</div>
   <div id="out" hidden></div>
 </div>
-<script src="config.js?v=11171440"></script>
-<script src="data.js?v=11171440"></script>
-<script src="basics.js?v=11171440"></script>
+<script src="config.js?v=11171500"></script>
+<script src="data.js?v=11171500"></script>
+<script src="basics.js?v=11171500"></script>
 <script>
 const ALLP=[];window.CITIES.filter(c=>!c.soon).forEach(c=>c.places.forEach(p=>{if(!ALLP.find(x=>x.code===p.code))ALLP.push({code:p.code,ko:p.ko,city:c.ko});}));
 const PL=ALLP.map(p=>p.code), NAMES=Object.fromEntries(ALLP.map(p=>[p.code,p.ko]));
@@ -82,7 +82,7 @@ function demoRows(){
       else push("place_quit",code);
     }
     if(days>=4){const post=Math.min(10,(skipped?2:score)+Math.round(Math.random()*3-0.5));push("posttest","",`${post}/10:pre=${skipped?"none":score}:${form==="A"?"B":"A"}:v2`);["say","say","say","say","say","understand","understand","understand","listen","listen"].forEach((k,j)=>push("posttest_q","",`${k}:${(j+3)%10<post?1:0}:v2`));}
-    if(days>=3&&Math.random()<.7){const r=()=>3+Math.round(Math.random()*2);push("survey","",`easy=${r()}|real=${r()}|confident=${Math.max(1,r()-1)}|recommend=${r()}`);if(u%4===0)push("survey_text","",["More Busan dialect please","Voice is too fast sometimes","Loved the bank lesson","Add Vietnamese menus"][u%4===0?(u/4)%4:0]);}
+    if(days>=4&&Math.random()<.8){const base=3+Math.random()*1.4;push("survey2","",[...Array(16)].map((_,i)=>`q${i+1}=${i===15?Math.max(1,Math.min(5,Math.round(6-base+Math.random()-.5))):Math.max(1,Math.min(5,Math.round(base+Math.random()-.5)))}`).join("|"));if(u%4===0)push("survey_text","",["More Busan dialect please","Voice is too fast sometimes","Loved the bank lesson","Add Vietnamese menus"][u%4===0?(u/4)%4:0]);}
     if(u%3===0){push("room_join","","1234");for(let q=0;q<10;q++)push("room_answer","",`1234:${Math.random()<.7?1:0}:meaning`);push("room_end","",`1234:${1+u%6}/6:${Math.round(Math.random()*8000)}`);}
   }
   return rows;
@@ -195,6 +195,14 @@ function draw(rows,isDemo){
   rows.filter(r=>r.event==="survey").forEach(r=>String(r.detail).split("|").forEach(kv=>{const [k,v]=kv.split("=");if(sv[k])sv[k].push(+v);}));
   const svN=rows.filter(r=>r.event==="survey").length;
   const texts=rows.filter(r=>r.event==="survey_text").slice(-20).reverse();
+  // usefulness survey (16 items, 4 sub-constructs; q16 reverse-coded)
+  const SC=[["Learning effectiveness",[1,2,3,4]],["Authenticity & relevance",[5,6,7,8]],["Real-life transfer & confidence",[9,10,11,12]],["Engagement & ease of use",[13,14,15,16]]];
+  const s2=rows.filter(r=>r.event==="survey2").map(r=>{const o={};String(r.detail).split("|").forEach(kv=>{const [k,v]=kv.split("=");o[+k.slice(1)]=+v;});o[16]=o[16]?6-o[16]:o[16];return o;});
+  const alpha=items=>{const k=items.length,resp=s2.filter(o=>items.every(i=>o[i]));if(resp.length<3)return null;
+    const vr=a=>{const m=avg(a);return avg(a.map(x=>(x-m)**2))*a.length/(a.length-1);};
+    const sumV=items.reduce((t,i)=>t+vr(resp.map(o=>o[i])),0), totV=vr(resp.map(o=>items.reduce((t,i)=>t+o[i],0)));
+    return totV?k/(k-1)*(1-sumV/totV):null;};
+  const scMean=items=>avg(s2.flatMap(o=>items.map(i=>o[i]).filter(Boolean)));
   const navy=css("--navy"),ok=css("--ok"),accC=css("--accent"),mut=css("--muted");
   out.innerHTML=`
   ${isDemo?`<div class="demo">DEMO DATA. Randomly generated to preview the dashboard. Not real users.</div>`:""}
@@ -216,8 +224,10 @@ function draw(rows,isDemo){
       <p class="sub">By skill (% correct, before → after): ${SK.map(([k,l])=>`${l} ${pct(skill[k].pre)}% → ${pct(skill[k].post)}%`).join(" · ")}</p>
       ${oldPairs?`<p class="sub">${oldPairs} user(s) took the older 8-question test; they are not included above.</p>`:""}
       <p class="sub">Form check (should be similar): A then B ${oA.n?(oA.g>=0?"+":"")+oA.g.toFixed(1):"–"} (n=${oA.n}) · B then A ${oB.n?(oB.g>=0?"+":"")+oB.g.toFixed(1):"–"} (n=${oB.n})</p></div>
-    <div class="panel"><h2>Feedback survey</h2><p class="sub">Average agreement, 1 = disagree, 5 = agree (n = ${svN})</p>
-      ${bars(SQ.map(([k,l])=>[l,avg(sv[k]),sv[k].length?avg(sv[k]).toFixed(1):"–"]),5,ok)}
+    <div class="panel"><h2>Usefulness survey</h2><p class="sub">Average per sub-construct, 1 = strongly disagree, 5 = strongly agree (n = ${s2.length}). Q16 reversed. α = Cronbach's alpha.</p>
+      ${bars(SC.map(([l,it])=>[l,scMean(it),s2.length?scMean(it).toFixed(2)+(alpha(it)!=null?` · α ${alpha(it).toFixed(2)}`:""):"–"]),5,ok)}
+      <p class="sub">Overall usefulness: <b>${s2.length?scMean([...Array(16)].map((_,i)=>i+1)).toFixed(2):"–"}</b> / 5${svN?` · ${svN} answer(s) to the old 4-question survey not included`:""}</p>
+      ${s2.length?`<details><summary class="sub">All 16 items</summary><div class="tw"><table><tr><th>Item</th><th>Mean</th></tr>${[...Array(16)].map((_,i)=>`<tr><td>Q${i+1}${i===15?" (reversed)":""}</td><td>${avg(s2.map(o=>o[i+1]).filter(Boolean)).toFixed(2)}</td></tr>`).join("")}</table></div></details>`:""}
       ${texts.length?`<div class="tw"><table><tr><th>Latest comments</th></tr>${texts.map(t=>`<tr><td>${String(t.detail).replace(/[<>&]/g,"")}</td></tr>`).join("")}</table></div>`:""}</div>
   </div>
   <div class="grid2">

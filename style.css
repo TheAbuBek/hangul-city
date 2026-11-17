@@ -373,3 +373,4 @@ button{font:inherit;color:inherit}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .25s ease-out}@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}}
 
 .qko{display:block;font-size:22px;margin:8px 0 2px;word-break:keep-all}
+.field.miss label{color:var(--accent)}.field.miss .likert button{border-color:var(--accent)}

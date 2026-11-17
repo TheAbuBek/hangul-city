@@ -246,10 +246,11 @@ function postDue(){
   if(/posttest/.test(location.search))return true;
   return daysSince(profile.signupAt)>=7||clearedCount()>=5;
 }
+// The usefulness survey comes at the end, right after the progress check.
 function surveyDue(){
-  if(!profile||profile.surveyDone)return false;
+  if(!profile||profile.survey2Done)return false;
   if(/survey/.test(location.search))return true;
-  return clearedCount()>=2;
+  return !!profile.postDone;
 }
 function startPost(){testMode="post";pq=0;pscore=0;porder=formsFor()[postForm()].map(q=>({...q,order:shuffle(q.options.map((_,i)=>i))}));S.track("posttest_start","",postForm());go("placement");}
 function finishPost(){
@@ -262,35 +263,60 @@ function finishPost(){
       <h1>${pscore}/${N}</h1>
       <p>${pre==null?"You skipped the first level check, so there's nothing to compare with. Thanks, this still helps.":diff>0?`Up ${diff} from your first check (${pre}/${N}). Your practice is working.`:diff===0?`Same as your first check (${pre}/${N}). Keep going, the review quizzes help most.`:`Your first check was ${pre}/${N}. A different set of questions can be harder, keep practising.`}</p>
       <div class="hero-chars"><div><img class="mascot" src="img/mascot.png" alt=""></div></div></div>
-    <div class="panel">${mistakesReview()}<button class="act" id="ok">Back to the map</button></div></div>`);
+    <div class="panel"><div class="note heads"><b>One last step:</b> 16 quick statements about the app, about 2 minutes. It's the most important part of our class project.</div>
+      <button class="act" id="tosurv">Answer the survey</button>${mistakesReview()}<button class="back" id="ok" style="align-self:center">Later, back to the map</button></div></div>`);
   app.replaceChildren(v);document.getElementById("ok").onclick=()=>go("map");
+  document.getElementById("tosurv").onclick=()=>{S.track("survey_open","","after_post");go("survey");};
 }
-// ---------- feedback survey ----------
-const SURVEY=[
-  {k:"easy",q:"The app was easy to use."},
-  {k:"real",q:"The conversations felt like real Korean."},
-  {k:"confident",q:"I feel more confident going to these places now."},
-  {k:"recommend",q:"I would recommend Hangul City to a friend."}
-];
+// ---------- usefulness survey (end of use) ----------
+// Construct: Perceived Usefulness of Hangul City. 4 sub-constructs x 2 dimensions x 2 items. q16 is reverse-coded.
+const SURVEY_PARTS=[
+  {t:"What you learned",items:[
+    ["q1","I learned Korean words and expressions that I did not know before."],
+    ["q2","I can remember the expressions I learned in the app."],
+    ["q3","The app helped me understand when Korean sounds too formal, too casual, or rude."],
+    ["q4","The feedback after my mistakes helped me understand how to say it correctly."]]},
+  {t:"The Korean in the app",items:[
+    ["q5","The conversations sounded like how Korean people really talk."],
+    ["q6","The app taught me Korean that I actually hear in daily life."],
+    ["q7","The places in the app (store, bus, bank, hospital…) are places I really need in my life in Korea."],
+    ["q8","The situations prepared me for problems I actually face in Korea."]]},
+  {t:"Using it in real life",items:[
+    ["q9","I feel more confident speaking Korean at stores, restaurants, or offices."],
+    ["q10","I am less worried about talking to Korean staff than before I used the app."],
+    ["q11","I have used an expression from the app in real life."],
+    ["q12","The real-life missions encouraged me to try speaking Korean outside the app."]]},
+  {t:"The app itself",items:[
+    ["q13","Learning with the map, characters, and missions was fun."],
+    ["q14","I wanted to come back to the app to unlock the next place."],
+    ["q15","The app was easy to use."],
+    ["q16","I sometimes did not know what to do next in the app."]]}];
+const SURVEY=SURVEY_PARTS.flatMap(p=>p.items.map(([k,q])=>({k,q})));
 function survey(){
   const ans={};
+  const scale=["Strongly disagree","Disagree","Neutral","Agree","Strongly agree"];
   const v=el(`<div class="col">
-    <div class="topbar"><span class="label">Quick feedback · 1 minute</span><button class="back" id="later" style="flex:none">Later</button></div>
-    <div class="panel">${SURVEY.map(s=>`<div class="field"><label>${s.q}</label>
-        <div class="likert" data-k="${s.k}">${[1,2,3,4,5].map(n=>`<button type="button" data-v="${n}" aria-label="${n} of 5">${n}</button>`).join("")}</div>
-        <div class="likert-ends"><span>Disagree</span><span>Agree</span></div></div>`).join("")}
-      <div class="field"><label for="fb">What should we change or add? (optional)</label>
+    <div class="topbar"><span class="label">Survey · 16 statements · 2 minutes</span><button class="back" id="later" style="flex:none">Later</button></div>
+    <div class="panel"><p class="small" style="margin:0">How much do you agree? 1 = strongly disagree, 5 = strongly agree. There are no right answers.</p></div>
+    ${SURVEY_PARTS.map((part,pi2)=>`<div class="panel"><p class="label">Part ${pi2+1} of 4 · ${part.t}</p>${part.items.map(([k,q])=>`<div class="field"><label>${+k.slice(1)}. ${q}</label>
+        <div class="likert" data-k="${k}">${[1,2,3,4,5].map(n=>`<button type="button" data-v="${n}" aria-label="${n}: ${scale[n-1]}">${n}</button>`).join("")}</div>
+        <div class="likert-ends"><span>Strongly disagree</span><span>Strongly agree</span></div></div>`).join("")}</div>`).join("")}
+    <div class="panel"><div class="field"><label for="fb">What should we improve? (optional)</label>
         <textarea id="fb" maxlength="180" rows="3" placeholder="Don't include your name or contact details"></textarea></div>
-      <div id="err"></div><button class="act" id="send">Send feedback</button></div></div>`);
+      <div id="err"></div><button class="act" id="send">Send survey</button></div></div>`);
   app.replaceChildren(v);
   v.querySelectorAll(".likert").forEach(g=>g.querySelectorAll("button").forEach(b=>b.onclick=()=>{
-    g.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");ans[g.dataset.k]=+b.dataset.v;}));
+    g.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");ans[g.dataset.k]=+b.dataset.v;
+    g.closest(".field").classList.remove("miss");}));
   document.getElementById("later").onclick=()=>{S.track("survey_later");surveySnooze=true;go("map");};
   document.getElementById("send").onclick=()=>{
-    if(SURVEY.some(s=>!ans[s.k])){document.getElementById("err").replaceChildren(el(`<div class="note bad">Pick a number for each of the 4 statements.</div>`));return;}
-    S.track("survey","",SURVEY.map(s=>`${s.k}=${ans[s.k]}`).join("|"));
+    const miss=SURVEY.filter(x=>!ans[x.k]);
+    if(miss.length){miss.forEach(x=>v.querySelector(`.likert[data-k="${x.k}"]`).closest(".field").classList.add("miss"));
+      document.getElementById("err").replaceChildren(el(`<div class="note bad">Please answer all 16 statements (${miss.length} left, marked in red).</div>`));
+      v.querySelector(".field.miss").scrollIntoView({block:"center",behavior:"smooth"});return;}
+    S.track("survey2","",SURVEY.map(x=>`${x.k}=${ans[x.k]}`).join("|"));
     const t=document.getElementById("fb").value.trim();if(t)S.track("survey_text","",t.slice(0,180));
-    profile.surveyDone=true;store.set("ssk_profile",profile);go("map");toast("Thank you! 감사합니다.");
+    profile.survey2Done=true;store.set("ssk_profile",profile);go("map");toast("Thank you so much! 감사합니다.");
   };
 }
 function applyLevel(lvl,score){
@@ -397,8 +423,8 @@ function mapView(){
   const v=el(`<div class="col">
     <div class="hud"><div><b class="hud-title"><img class="hud-face" src="img/face.png" alt="" width="26" height="23">한글 시티</b><span class="hello">안녕, ${esc(profile.nick)}! · ${cfg().name}</span></div>
       <div class="hud-score"><b>${cleared}<small>/${n}</small></b><span>${city().ko} cleared · ${stars} ★</span></div></div>
-    ${postDue()&&!postSnooze?`<div class="banner"><div><b>Progress check</b><span>8 questions, 2 minutes. See how much you've improved.</span></div><div class="row"><button class="act" id="post">Start</button><button class="act alt" id="postlater">Later</button></div></div>`
-      :surveyDue()&&!surveySnooze?`<div class="banner"><div><b>Quick feedback</b><span>4 questions, 1 minute. It helps us make the app better.</span></div><div class="row"><button class="act" id="surv">Give feedback</button><button class="act alt" id="survlater">Later</button></div></div>`
+    ${postDue()&&!postSnooze?`<div class="banner"><div><b>Progress check</b><span>${formsFor()[postForm()].length} questions, about 3 minutes. See how much you've improved.</span></div><div class="row"><button class="act" id="post">Start</button><button class="act alt" id="postlater">Later</button></div></div>`
+      :surveyDue()&&!surveySnooze?`<div class="banner"><div><b>Last step: app survey</b><span>16 quick statements, about 2 minutes. It helps our class project a lot.</span></div><div class="row"><button class="act" id="surv">Answer</button><button class="act alt" id="survlater">Later</button></div></div>`
       :openStation?`<div class="banner"><div><b>🚏 ${openStation.ko} is open</b><span>8 questions on ${openStation.covers.map(c=>c.ko).join(" + ")}. Pass it to unlock the next place.</span></div><div class="row"><button class="act" id="station">Start review</button></div></div>`:""}
     <div class="cities">${CITIES.map(c=>`<button class="city ${c.id===cityId?"on":""} ${c.soon?"soon":""}" data-c="${c.id}">${c.ko}<small>${c.soon?"soon":c.en}</small></button>`).join("")}</div>
     ${CITY_INFO[cityId]?`<p class="cityline">${CITY_INFO[cityId].line}</p>`:""}
